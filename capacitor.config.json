@@ -1,0 +1,13 @@
+{
+  "appId": "com.lwo.analysis",
+  "appName": "LWO 물류 분석",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
