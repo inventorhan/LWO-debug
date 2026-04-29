@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { fileToBase64, calcArea } from '../shared/utils/common'
 
-const LOAD_TYPES = ['대차', '박스', 'Rack', '파렛트', '기타']
+const LOAD_TYPES = ['박스', '파렛트', '대차', 'Rack', '기타']
+/* 체적 가중치 select 옵션 */
+const VOL_WEIGHT_OPTIONS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 function emptyZone(no) {
   return { no, width: '', height: '', photo: null, items: [] }
 }
 
 function emptyItem() {
-  return { type: '대차', qty: 1, height: '', width: '', depth: '', photo: null }
+  return { type: '박스', qty: 1, minHeight: '', maxHeight: '', volWeight: 0.8, width: '', depth: '', photo: null }
 }
 
-/* mm² → 보기 좋은 단위로 자동 변환 */
+/* mm² → m² (소수점 1자리) */
 function fmtArea(mm2) {
-  if (mm2 == null) return '—'
-  if (mm2 >= 1_000_000) return `${(mm2 / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 })} m²`
-  return `${mm2.toLocaleString(undefined, { maximumFractionDigits: 0 })} mm²`
+  if (mm2 == null || mm2 <= 0) return '—'
+  const m2 = mm2 / 1_000_000
+  return `${m2.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`
 }
 
 export default function AreaEfficiency({ data, updateData }) {
@@ -64,11 +66,28 @@ export default function AreaEfficiency({ data, updateData }) {
   const curZone = zones[safeActiveZone]
   const zoneArea = curZone ? calcArea(curZone.width, curZone.height) : null
 
-  const heights = (curZone?.items || []).map(i => parseFloat(i.height)).filter(h => !isNaN(h) && h > 0)
+  /* 체적 효율: (최고높이 - 최저높이) × 체적가중치 — 항목별 누적 후 평균 */
+  const volumeStats = (curZone?.items || []).map(it => {
+    const lo = parseFloat(it.minHeight)
+    const hi = parseFloat(it.maxHeight)
+    const w  = parseFloat(it.volWeight) || 0.8
+    if (!isNaN(lo) && !isNaN(hi) && hi > 0) {
+      const drop = (hi - lo) * w
+      const ratePct = (drop / hi) * 100  /* 손실 비율 */
+      const usedPct = ((hi - drop) / hi) * 100
+      return { type: it.type, lo, hi, w, drop, ratePct, usedPct }
+    }
+    return null
+  }).filter(Boolean)
+
+  const avgUsedPct = volumeStats.length > 0
+    ? volumeStats.reduce((acc, v) => acc + v.usedPct, 0) / volumeStats.length
+    : null
+
+  /* 호환성: 기존 cubicRate (자료 호환) */
+  const heights = (curZone?.items || []).map(i => parseFloat(i.maxHeight)).filter(h => !isNaN(h) && h > 0)
   const minHeight = heights.length ? Math.min(...heights) : null
   const maxHeight = heights.length ? Math.max(...heights) : null
-  const cubicRate = (minHeight !== null && maxHeight !== null && maxHeight > 0)
-    ? (((maxHeight - minHeight) / maxHeight) * 100) : null
 
   const PhotoButton = ({ photo, onChange, label = '사진 촬영' }) => (
     <label className="btn" style={{
@@ -200,6 +219,8 @@ export default function AreaEfficiency({ data, updateData }) {
             {curZone.items.map((item, iIdx) => {
               const itemArea = calcArea(item.width, item.depth)
               const totalArea = itemArea ? itemArea * (parseInt(item.qty) || 1) : null
+              const lo = parseFloat(item.minHeight); const hi = parseFloat(item.maxHeight)
+              const drop = (!isNaN(lo) && !isNaN(hi) && hi > 0) ? (hi - lo) * (parseFloat(item.volWeight) || 0.8) : null
               return (
                 <div key={iIdx} className="section-card" style={{ background: '#ffffff', margin: '0 0 12px 0', position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
@@ -209,34 +230,46 @@ export default function AreaEfficiency({ data, updateData }) {
                   </div>
                   <div className="input-grid">
                     <div className="input-group">
-                      <span className="input-label">적재 종류</span>
+                      <div className="input-label-row"><span className="input-label">적재 종류</span></div>
                       <select className="input-field" value={item.type}
                         onChange={e => updateItem(safeActiveZone, iIdx, { type: e.target.value })}>
                         {LOAD_TYPES.map(t => <option key={t}>{t}</option>)}
                       </select>
                     </div>
                     <div className="input-group">
-                      <span className="input-label">적재 개수</span>
+                      <div className="input-label-row"><span className="input-label">적재 개수</span></div>
                       <input className="input-field" type="number" min={1} value={item.qty}
                         onChange={e => updateItem(safeActiveZone, iIdx, { qty: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <span className="input-label">가로 (mm)</span>
+                      <div className="input-label-row"><span className="input-label">가로 (mm)</span></div>
                       <input className="input-field" type="number" min={0} value={item.width}
                         onChange={e => updateItem(safeActiveZone, iIdx, { width: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <span className="input-label">세로 (mm)</span>
+                      <div className="input-label-row"><span className="input-label">세로 (mm)</span></div>
                       <input className="input-field" type="number" min={0} value={item.depth}
                         onChange={e => updateItem(safeActiveZone, iIdx, { depth: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <span className="input-label">높이 (mm)</span>
-                      <input className="input-field" type="number" min={0} value={item.height}
-                        onChange={e => updateItem(safeActiveZone, iIdx, { height: e.target.value })} />
+                      <div className="input-label-row"><span className="input-label">최저 높이 (mm)</span></div>
+                      <input className="input-field" type="number" min={0} value={item.minHeight ?? ''}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { minHeight: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <span className="input-label">실 적재 사진</span>
+                      <div className="input-label-row"><span className="input-label">최고 높이 (mm)</span></div>
+                      <input className="input-field" type="number" min={0} value={item.maxHeight ?? ''}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { maxHeight: e.target.value })} />
+                    </div>
+                    <div className="input-group">
+                      <div className="input-label-row"><span className="input-label">체적 가중치</span></div>
+                      <select className="input-field" value={item.volWeight ?? 0.8}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { volWeight: parseFloat(e.target.value) })}>
+                        {VOL_WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w.toFixed(1)}</option>)}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <div className="input-label-row"><span className="input-label">실 적재 사진</span></div>
                       <PhotoButton photo={item.photo}
                         onChange={(f) => handlePhoto('item', safeActiveZone, iIdx, f)} />
                     </div>
@@ -244,6 +277,12 @@ export default function AreaEfficiency({ data, updateData }) {
                       <div className="result-box tone-blue">
                         <span className="result-box__label">합계 면적 (가×세×개수)</span>
                         <span className="result-box__value">{fmtArea(totalArea)}</span>
+                      </div>
+                    </div>
+                    <div className="input-group full-width">
+                      <div className="result-box tone-slate">
+                        <span className="result-box__label">체적 손실량 = (최고−최저) × 가중치</span>
+                        <span className="result-box__value">{drop !== null ? `${drop.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mm` : '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -257,16 +296,16 @@ export default function AreaEfficiency({ data, updateData }) {
             <div style={{ height: 1, background: 'var(--color-card-border)', margin: '16px 0' }} />
             <div className="input-grid" style={{ marginTop: 8 }}>
               <div className="result-box tone-blue">
-                <span className="result-box__label">최소 높이 적재</span>
-                <span className="result-box__value">{minHeight !== null ? `${minHeight} mm` : '—'}</span>
+                <span className="result-box__label">최저 높이 (전체 최소)</span>
+                <span className="result-box__value">{minHeight !== null ? `${(minHeight / 1000).toFixed(1)} m` : '—'}</span>
               </div>
               <div className="result-box tone-blue">
-                <span className="result-box__label">최대 높이 적재</span>
-                <span className="result-box__value">{maxHeight !== null ? `${maxHeight} mm` : '—'}</span>
+                <span className="result-box__label">최고 높이 (전체 최대)</span>
+                <span className="result-box__value">{maxHeight !== null ? `${(maxHeight / 1000).toFixed(1)} m` : '—'}</span>
               </div>
               <div className="result-box full-width tone-dark">
-                <span className="result-box__label">체적율 = (최대−최소) ÷ 최대 × 100%</span>
-                <span className="result-box__value">{cubicRate !== null ? `${cubicRate.toFixed(1)}%` : '—'}</span>
+                <span className="result-box__label">평균 체적 사용율 = ((최고−손실) ÷ 최고) 평균</span>
+                <span className="result-box__value">{avgUsedPct !== null ? `${avgUsedPct.toFixed(1)}%` : '—'}</span>
               </div>
             </div>
           </>

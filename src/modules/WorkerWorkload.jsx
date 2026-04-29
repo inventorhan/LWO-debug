@@ -10,12 +10,16 @@ const CARD_TITLES = {
   recovery: '회수 시간'
 }
 
+/* 회수는 PPT 요청대로 '똥색' (brown/khaki) */
 const COLORS = {
   pick: '#10b981',
   move: '#3b82f6',
   load: '#f59e0b',
-  recovery: '#ef4444'
+  recovery: '#8b6914'  /* dark khaki */
 }
+
+/* 부하 가중치 select 옵션 */
+const WEIGHT_OPTIONS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 export default function WorkerWorkload({
   data, updateData, addPhoto, removePhoto,
@@ -41,6 +45,7 @@ export default function WorkerWorkload({
   const activeCycle = measurements.find(m => m.id === activeCycleId)
   const activeIndex = activeCycle ? measurements.findIndex(m => m.id === activeCycleId) + 1 : 0
 
+  const [chartMode, setChartMode] = useState('total')   // 'total' | 'avg'
   const [isManagerOpen, setIsManagerOpen] = useState(false)
   const [newPersonName, setNewPersonName] = useState('')
   const [editingName, setEditingName] = useState(null)
@@ -90,11 +95,12 @@ export default function WorkerWorkload({
   const weightedTime = 3600 * weight
   const workloadRate = weightedTime > 0 ? ((totalTransportSec / weightedTime) * 100) : 0
 
-  /* 다른 인원 통계 (대시보드) */
+  /* 다른 인원 통계 (대시보드) — chartMode에 따라 누적/평균 */
   const workerStats = (personnelList || []).map(name => {
     const pData = dataByPersonnel[name] || {}
     const bInfo = pData.basicInfo || {}
     const meas = pData.measurements || []
+    const cycleCount = meas.length || 1
     let pickT = 0, moveT = 0, loadT = 0, recoverT = 0
     meas.forEach(m => m.cards?.forEach(c => {
       const g = parseFloat(getGap(c.start, c.end)) || 0
@@ -103,6 +109,9 @@ export default function WorkerWorkload({
       else if (c.type === 'load') loadT += g
       else if (c.type === 'recovery') recoverT += g
     }))
+    /* chartMode: total=누적 / avg=회당 평균 */
+    const div = chartMode === 'avg' ? cycleCount : 1
+    pickT /= div; moveT /= div; loadT /= div; recoverT /= div
     const totalT = pickT + moveT + loadT + recoverT
     const tType = bInfo.transportType || 'worker'
     const uSpeed = tType === 'other' ? (parseFloat(bInfo.speed) || 0) : (transportTypes[tType]?.speed || 0)
@@ -182,12 +191,9 @@ export default function WorkerWorkload({
         <div className="section-title">기초 정보 입력</div>
         <div className="input-grid">
           <div className="input-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="input-label-row">
               <span className="input-label">물류 인원 (이름)</span>
-              <button className="btn" onClick={() => setIsManagerOpen(true)}
-                style={{ height: 26, padding: '0 8px', fontSize: '0.7rem', background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569' }}>
-                명단관리
-              </button>
+              <button className="mini-btn" onClick={() => setIsManagerOpen(true)}>명단관리</button>
             </div>
             <select className="input-field" value={activePersonnel || ''}
               onChange={e => switchPersonnel(e.target.value)}>
@@ -197,17 +203,14 @@ export default function WorkerWorkload({
           </div>
 
           <div className="input-group">
-            <span className="input-label">측정 횟수</span>
+            <div className="input-label-row"><span className="input-label">측정 횟수</span></div>
             <input className="input-field" type="number" value={measurements.length || 0} readOnly />
           </div>
 
           <div className="input-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="input-label-row">
               <span className="input-label">운반 종류 (속도 자동)</span>
-              <button className="btn" onClick={() => setIsTransportManagerOpen(true)}
-                style={{ height: 26, padding: '0 8px', fontSize: '0.7rem', background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569' }}>
-                운반관리
-              </button>
+              <button className="mini-btn" onClick={() => setIsTransportManagerOpen(true)}>운반관리</button>
             </div>
             <select className="input-field" value={basicInfo.transportType || 'worker'}
               onChange={e => setBasicInfo({ transportType: e.target.value })}>
@@ -218,23 +221,24 @@ export default function WorkerWorkload({
           </div>
 
           <div className="input-group">
-            <span className="input-label">운반 수량</span>
+            <div className="input-label-row"><span className="input-label">운반 수량</span></div>
             <input className="input-field" type="number" min={1} value={basicInfo.transportQty ?? 1}
               onChange={e => setBasicInfo({ transportQty: e.target.value })} />
           </div>
 
           <div className="input-group">
-            <span className="input-label">운반 속도 (m/s)</span>
+            <div className="input-label-row"><span className="input-label">운반 속도 (m/s)</span></div>
             <input className="input-field" type="number" step="0.1" min={0} value={speed}
               readOnly={basicInfo.transportType !== 'other'}
               onChange={e => setBasicInfo({ speed: e.target.value })} />
           </div>
 
           <div className="input-group">
-            <span className="input-label">부하 가중치 (0~1)</span>
-            <input className="input-field" type="number" step="0.1" min={0.1} max={1}
-              value={basicInfo.weight ?? 0.8}
-              onChange={e => setBasicInfo({ weight: parseFloat(e.target.value) || 0.8 })} />
+            <div className="input-label-row"><span className="input-label">부하 가중치 (0~1)</span></div>
+            <select className="input-field" value={basicInfo.weight ?? 0.8}
+              onChange={e => setBasicInfo({ weight: parseFloat(e.target.value) })}>
+              {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w.toFixed(1)}</option>)}
+            </select>
           </div>
 
           <PhotoSection title="운반 사진" photos={photos.transport}
@@ -315,20 +319,12 @@ export default function WorkerWorkload({
                   <input className="input-field" type="number" min={0} value={card.materialCount ?? ''}
                     onChange={e => updateCycleCard(activeCycleId, card.id, { materialCount: e.target.value })} />
                 </div>
-              ) : card.type === 'move' ? (
-                <div className="input-group">
-                  <span className="input-label">경유지 번호 (1~10)</span>
-                  <select className="input-field" value={card.waypointNo ?? 1}
-                    onChange={e => updateCycleCard(activeCycleId, card.id, { waypointNo: parseInt(e.target.value) })}>
-                    {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}번</option>)}
-                  </select>
-                </div>
-              ) : card.type === 'load' ? (
+              ) : (card.type === 'move' || card.type === 'load') ? (
                 <div className="input-group">
                   <span className="input-label">공정 번호 (1~10)</span>
-                  <select className="input-field" value={card.processNo ?? 1}
-                    onChange={e => updateCycleCard(activeCycleId, card.id, { processNo: parseInt(e.target.value) })}>
-                    {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}번</option>)}
+                  <select className="input-field" value={card.processNo ?? card.waypointNo ?? 1}
+                    onChange={e => updateCycleCard(activeCycleId, card.id, { processNo: parseInt(e.target.value), waypointNo: parseInt(e.target.value) })}>
+                    {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}공정</option>)}
                   </select>
                 </div>
               ) : null
@@ -353,9 +349,18 @@ export default function WorkerWorkload({
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '2px dashed #e2e8f0' }}>
           <div style={{
             fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-primary-dark)',
-            textAlign: 'center', padding: '8px 16px 16px'
+            textAlign: 'center', padding: '8px 16px 12px'
           }}>
             📊 전체 인원 분석 대시보드
+          </div>
+
+          <div className="chart-mode-toggle">
+            <button
+              className={`chart-mode-btn ${chartMode === 'total' ? 'active' : ''}`}
+              onClick={() => setChartMode('total')}>누적</button>
+            <button
+              className={`chart-mode-btn ${chartMode === 'avg' ? 'active' : ''}`}
+              onClick={() => setChartMode('avg')}>평균</button>
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
@@ -368,7 +373,7 @@ export default function WorkerWorkload({
           </div>
 
           <div className="section-card" style={{ background: 'white' }}>
-            <div className="section-title">인원별 작업 시간 누적 (초)</div>
+            <div className="section-title">인원별 작업 시간 {chartMode === 'avg' ? '평균' : '누적'} (초)</div>
             <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
               {workerStats.map((w, i) => {
                 const heightPct = maxT > 0 ? Math.max(2, (w.totalT / maxT) * 100) : 2
@@ -389,7 +394,7 @@ export default function WorkerWorkload({
           </div>
 
           <div className="section-card" style={{ background: 'white' }}>
-            <div className="section-title">인원별 총 이동 거리 누적 (m)</div>
+            <div className="section-title">인원별 총 이동 거리 {chartMode === 'avg' ? '평균' : '누적'} (m)</div>
             <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
               {workerStats.map((w, i) => {
                 const heightPct = maxDist > 0 ? Math.max(2, (w.dist / maxDist) * 100) : 2

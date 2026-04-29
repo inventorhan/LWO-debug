@@ -20,7 +20,11 @@ export default function App() {
     state, setState, updateWorker, updateElevator, updateArea, updateInventory, updateAmr,
     addPhoto, removePhoto, addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
-    switchPersonnel, addTransportType, updateTransportType, removeTransportType
+    switchPersonnel, addTransportType, updateTransportType, removeTransportType,
+    switchHogi, updateElevatorBasic,
+    addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
+    addElevatorCard, removeElevatorCard,
+    addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem
   } = useAppState()
 
   const [activeTab, setActiveTab] = useState('worker')
@@ -92,6 +96,16 @@ export default function App() {
     }
   }
 
+  /* 사진 추가/삭제 wrap — 에러 시 사용자 알림 */
+  const safeAddPhoto = async (module, category, file) => {
+    try {
+      await addPhoto(module, category, file)
+    } catch (err) {
+      console.error(err)
+      showToast('⚠️ 사진을 처리할 수 없습니다. 다시 시도해 주세요.')
+    }
+  }
+
   const renderModule = () => {
     switch (activeTab) {
       case 'worker':
@@ -99,7 +113,7 @@ export default function App() {
           key={state.worker.activePersonnel}
           data={state.worker}
           updateData={updateWorker}
-          addPhoto={(cat, file) => addPhoto('worker', cat, file)}
+          addPhoto={(cat, file) => safeAddPhoto('worker', cat, file)}
           removePhoto={(cat, idx) => removePhoto('worker', cat, idx)}
           addPersonnel={addPersonnel}
           removePersonnel={removePersonnel}
@@ -117,8 +131,17 @@ export default function App() {
       case 'elevator':
         return <ElevatorWorkload
           data={state.elevator}
-          updateData={updateElevator}
-          addPhoto={(file) => addPhoto('elevator', null, file)}
+          switchHogi={switchHogi}
+          updateElevatorBasic={updateElevatorBasic}
+          addElevatorCycle={addElevatorCycle}
+          removeElevatorCycle={removeElevatorCycle}
+          updateElevatorCycleCard={updateElevatorCycleCard}
+          addElevatorCard={addElevatorCard}
+          removeElevatorCard={removeElevatorCard}
+          addElevatorLoadItem={addElevatorLoadItem}
+          updateElevatorLoadItem={updateElevatorLoadItem}
+          removeElevatorLoadItem={removeElevatorLoadItem}
+          addPhoto={(file) => safeAddPhoto('elevator', null, file)}
           removePhoto={(idx) => removePhoto('elevator', null, idx)}
         />
       case 'area':

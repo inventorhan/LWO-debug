@@ -14,21 +14,39 @@ const initialTransportTypes = {
 }
 
 /* ───── 초기 데이터 템플릿 ───── */
-const createInitialWorkerData = (name) => ({
-  basicInfo: { personnel: name, transportType: 'worker', transportQty: 1, speed: 2.3, weight: 0.8, measureCount: 1 },
-  measurements: [
-    {
-      id: `cycle-${Date.now()}`,
-      name: '1',
-      cards: [
-        { id: `1-pick-${Date.now()}`, type: 'pick', start: null, end: null, materialCount: 1 },
-        { id: `1-move-${Date.now()}`, type: 'move', start: null, end: null, waypointNo: 1 },
-        { id: `1-load-${Date.now()}`, type: 'load', start: null, end: null, processNo: 1 }
-      ]
-    }
-  ],
-  photos: { transport: [], part: [] }
-})
+const createInitialWorkerData = (name) => {
+  const t = Date.now()
+  return {
+    basicInfo: { personnel: name, transportType: 'worker', transportQty: 1, speed: 2.3, weight: 0.8, measureCount: 1 },
+    measurements: [
+      {
+        id: `cycle-${t}`,
+        name: '1',
+        cards: [
+          { id: `1-pick-${t}`,     type: 'pick',     start: null, end: null, materialCount: 1 },
+          { id: `1-move-${t}`,     type: 'move',     start: null, end: null, processNo: 1 },
+          { id: `1-load-${t}`,     type: 'load',     start: null, end: null, processNo: 1 },
+          { id: `1-recovery-${t}`, type: 'recovery', start: null, end: null }
+        ]
+      }
+    ],
+    photos: { transport: [], part: [] }
+  }
+}
+
+/* ───── E/V 측정 1회차 템플릿 ───── */
+const createInitialElevatorMeasurement = (idx = 1) => {
+  const t = Date.now()
+  return {
+    id: `ev-cycle-${t}-${Math.random().toString(36).slice(2, 6)}`,
+    name: `${idx}`,
+    cards: [
+      { id: `ev-${idx}-load-${t}`,   type: 'load',   start: null, end: null, materialCount: '' },
+      { id: `ev-${idx}-move-${t}`,   type: 'move',   start: null, end: null, floorNo: 1 },
+      { id: `ev-${idx}-unload-${t}`, type: 'unload', start: null, end: null, processNo: 1 }
+    ]
+  }
+}
 
 /* ── Global state ── */
 export const initialState = {
@@ -40,20 +58,25 @@ export const initialState = {
     },
     transportTypes: initialTransportTypes
   },
-  elevator: { 
-    basicInfo: { hogiNo: 1, cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8 }, 
-    cards: [
-      { id: 'ev-init-load', type: 'load', start: null, end: null, materialCount: '' },
-      { id: 'ev-init-move', type: 'move', start: null, end: null, floorNo: 1 },
-      { id: 'ev-init-unload', type: 'unload', start: null, end: null, processNo: 1 }
-    ],
-    photos: []
+  elevator: {
+    /* 호기별 데이터: 1~9호기 각각 독립 측정 + 가중치 + 사진 */
+    activeHogi: 1,
+    /* 호기별 결과 비교를 위해 dataByHogi 저장 (key는 string '1'~'9') */
+    dataByHogi: {
+      '1': {
+        basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+        measurements: [createInitialElevatorMeasurement(1)],
+        loadItems: [],   // E/V 적재율 계산용 박스/대차 항목
+        photos: []
+      }
+    }
   },
-  area: { 
-    factory: { width: '', height: '', photo: null }, 
+  area: {
+    factory: { width: '', height: '', photo: null },
+    /* zones[i].items[j]: 박스/파렛트/대차 + 높이(최저/최고) + 체적가중치 */
     zones: [
       { no: 1, width: '', height: '', photo: null, items: [] }
-    ] 
+    ]
   },
   inventory: { selfUph: '', dayShiftTime: '', nightShiftTime: '', remainTime: '', ageingQty: '', customerUph: '', customerProdTime: '', distributionRatio: '', depotLoadTime: '', selfToCustomerTime: '', customerDockTime: '', waitTime: '', customerStock: '' },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
@@ -68,7 +91,26 @@ export function useAppState() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
-        // 누락된 모듈/필드는 초기값으로 보완 (구버전 데이터 호환)
+        // 구버전 elevator(단일 cards)를 호기별 구조로 마이그레이션
+        let migratedElevator = parsed.elevator
+        if (migratedElevator && Array.isArray(migratedElevator.cards) && !migratedElevator.dataByHogi) {
+          const oldHogi = migratedElevator.basicInfo?.hogiNo || 1
+          migratedElevator = {
+            activeHogi: oldHogi,
+            dataByHogi: {
+              [String(oldHogi)]: {
+                basicInfo: { ...migratedElevator.basicInfo },
+                measurements: [{
+                  id: `ev-cycle-migrated-${Date.now()}`,
+                  name: '1',
+                  cards: migratedElevator.cards
+                }],
+                loadItems: [],
+                photos: migratedElevator.photos || []
+              }
+            }
+          }
+        }
         setState({
           ...initialState,
           ...parsed,
@@ -78,7 +120,7 @@ export function useAppState() {
             transportTypes: { ...initialState.worker.transportTypes, ...((parsed.worker || {}).transportTypes || {}) },
             dataByPersonnel: (parsed.worker && parsed.worker.dataByPersonnel) || initialState.worker.dataByPersonnel
           },
-          elevator:  { ...initialState.elevator, ...(parsed.elevator || {}) },
+          elevator:  { ...initialState.elevator, ...(migratedElevator || {}) },
           area:      { ...initialState.area, ...(parsed.area || {}) },
           inventory: { ...initialState.inventory, ...(parsed.inventory || {}) },
           amr:       { ...initialState.amr, ...(parsed.amr || {}) }
@@ -123,6 +165,242 @@ export function useAppState() {
     })
   }, [])
 
+  /* ── E/V (호기별) ── */
+  const ensureHogiData = (s, hogiKey) => {
+    if (!s.elevator.dataByHogi[hogiKey]) {
+      return {
+        ...s,
+        elevator: {
+          ...s.elevator,
+          dataByHogi: {
+            ...s.elevator.dataByHogi,
+            [hogiKey]: {
+              basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+              measurements: [createInitialElevatorMeasurement(1)],
+              loadItems: [],
+              photos: []
+            }
+          }
+        }
+      }
+    }
+    return s
+  }
+
+  const switchHogi = useCallback((no) => {
+    setState(s => {
+      const key = String(no)
+      const next = ensureHogiData(s, key)
+      return { ...next, elevator: { ...next.elevator, activeHogi: no } }
+    })
+  }, [])
+
+  const updateElevatorHogi = useCallback((upd) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: { ...safe.elevator.dataByHogi, [key]: { ...cur, ...upd } }
+        }
+      }
+    })
+  }, [])
+
+  const updateElevatorBasic = useCallback((upd) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, basicInfo: { ...cur.basicInfo, ...upd } }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const addElevatorCycle = useCallback(() => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      const next = createInitialElevatorMeasurement((cur.measurements?.length || 0) + 1)
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, measurements: [...(cur.measurements || []), next] }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const removeElevatorCycle = useCallback((cycleId) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      if ((cur.measurements?.length || 0) <= 1) return s
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, measurements: cur.measurements.filter(m => m.id !== cycleId) }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const updateElevatorCycleCard = useCallback((cycleId, cardId, upd) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: {
+              ...cur,
+              measurements: cur.measurements.map(m =>
+                m.id === cycleId
+                  ? { ...m, cards: m.cards.map(c => c.id === cardId ? { ...c, ...upd } : c) }
+                  : m
+              )
+            }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const addElevatorCard = useCallback((cycleId, cardType) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      const newCard = {
+        id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: cardType, start: null, end: null,
+        ...(cardType === 'load'   ? { materialCount: '' }
+           : cardType === 'unload' ? { processNo: 1 }
+           : cardType === 'move'   ? { floorNo: 1 } : {})
+      }
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: {
+              ...cur,
+              measurements: cur.measurements.map(m =>
+                m.id === cycleId ? { ...m, cards: [...m.cards, newCard] } : m
+              )
+            }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const removeElevatorCard = useCallback((cycleId, cardId) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: {
+              ...cur,
+              measurements: cur.measurements.map(m =>
+                m.id === cycleId ? { ...m, cards: m.cards.filter(c => c.id !== cardId) } : m
+              )
+            }
+          }
+        }
+      }
+    })
+  }, [])
+
+  /* ── E/V 적재 항목 (적재율 계산용) ── */
+  const addElevatorLoadItem = useCallback(() => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      const item = { id: `el-${Date.now()}`, type: '박스', qty: 1, width: '', depth: '' }
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, loadItems: [...(cur.loadItems || []), item] }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const updateElevatorLoadItem = useCallback((id, upd) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, loadItems: (cur.loadItems || []).map(it => it.id === id ? { ...it, ...upd } : it) }
+          }
+        }
+      }
+    })
+  }, [])
+
+  const removeElevatorLoadItem = useCallback((id) => {
+    setState(s => {
+      const key = String(s.elevator.activeHogi)
+      const safe = ensureHogiData(s, key)
+      const cur = safe.elevator.dataByHogi[key]
+      return {
+        ...safe,
+        elevator: {
+          ...safe.elevator,
+          dataByHogi: {
+            ...safe.elevator.dataByHogi,
+            [key]: { ...cur, loadItems: (cur.loadItems || []).filter(it => it.id !== id) }
+          }
+        }
+      }
+    })
+  }, [])
+
+  /* 호환성 유지용: 옛 updateElevator 호출 잔존 시 fallback */
   const updateElevator  = useCallback(u => setState(s => ({ ...s, elevator: { ...s.elevator, ...u } })), [])
   const updateArea      = useCallback(u => setState(s => ({ ...s, area: { ...s.area, ...u } })), [])
   const updateInventory = useCallback(u => setState(s => ({ ...s, inventory: { ...s.inventory, ...u } })), [])
@@ -234,7 +512,7 @@ export function useAppState() {
                         type: cardType, 
                         start: null, 
                         end: null,
-                        ...(cardType === 'pick' ? { materialCount: 1 } : cardType === 'move' ? { waypointNo: 1 } : { processNo: 1 })
+                        ...(cardType === 'pick' ? { materialCount: 1 } : cardType === 'recovery' ? {} : { processNo: 1 })
                       }
                     ] 
                   } 
@@ -382,26 +660,42 @@ export function useAppState() {
     })
   }, [])
 
-  /* 사진 업로드 */
+  /* 사진 업로드 (이미지 자동 압축됨) */
   const addPhoto = useCallback(async (module, category, file) => {
-    const base64 = await fileToBase64(file)
+    let base64
+    try {
+      base64 = await fileToBase64(file)
+    } catch (err) {
+      console.error('사진 처리 실패:', err)
+      return
+    }
     setState(s => {
       const next = { ...s }
       if (module === 'worker') {
         const active = s.worker.activePersonnel
         const workerData = s.worker.dataByPersonnel[active]
-        next.worker = { 
-          ...next.worker, 
+        if (!workerData) return s
+        next.worker = {
+          ...next.worker,
           dataByPersonnel: {
             ...next.worker.dataByPersonnel,
             [active]: {
               ...workerData,
-              photos: { ...workerData.photos, [category]: [...(workerData.photos[category] || []), base64] }
+              photos: { ...workerData.photos, [category]: [...(workerData.photos?.[category] || []), base64] }
             }
           }
         }
       } else if (module === 'elevator') {
-        next.elevator = { ...next.elevator, photos: [...(next.elevator.photos || []), base64] }
+        const key = String(s.elevator.activeHogi)
+        const cur = s.elevator.dataByHogi[key]
+        if (!cur) return s
+        next.elevator = {
+          ...next.elevator,
+          dataByHogi: {
+            ...next.elevator.dataByHogi,
+            [key]: { ...cur, photos: [...(cur.photos || []), base64] }
+          }
+        }
       }
       return next
     })
@@ -413,10 +707,11 @@ export function useAppState() {
       if (module === 'worker') {
         const active = s.worker.activePersonnel
         const workerData = s.worker.dataByPersonnel[active]
-        const list = [...workerData.photos[category]]
+        if (!workerData) return s
+        const list = [...(workerData.photos?.[category] || [])]
         list.splice(index, 1)
-        next.worker = { 
-          ...next.worker, 
+        next.worker = {
+          ...next.worker,
           dataByPersonnel: {
             ...next.worker.dataByPersonnel,
             [active]: {
@@ -426,21 +721,35 @@ export function useAppState() {
           }
         }
       } else if (module === 'elevator') {
-        const list = [...next.elevator.photos]
+        const key = String(s.elevator.activeHogi)
+        const cur = s.elevator.dataByHogi[key]
+        if (!cur) return s
+        const list = [...(cur.photos || [])]
         list.splice(index, 1)
-        next.elevator = { ...next.elevator, photos: list }
+        next.elevator = {
+          ...next.elevator,
+          dataByHogi: {
+            ...next.elevator.dataByHogi,
+            [key]: { ...cur, photos: list }
+          }
+        }
       }
       return next
     })
   }, [])
 
-  return { 
-    state, setState, 
+  return {
+    state, setState,
     updateWorker, updateElevator, updateArea, updateInventory, updateAmr,
     addPhoto, removePhoto,
     addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
     switchPersonnel,
-    addTransportType, updateTransportType, removeTransportType
+    addTransportType, updateTransportType, removeTransportType,
+    /* E/V */
+    switchHogi, updateElevatorHogi, updateElevatorBasic,
+    addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
+    addElevatorCard, removeElevatorCard,
+    addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem
   }
 }

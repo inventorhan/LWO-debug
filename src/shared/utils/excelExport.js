@@ -128,7 +128,7 @@ export async function exportToExcel(state) {
     }
   })
 
-  /* ─── 2. E/V 부하율 ─── */
+  /* ─── 2. E/V 부하율 (호기별) ─── */
   const ws2 = workbook.addWorksheet('2.E_V 부하율')
   ws2.columns = [
     { header: '항목', key: 'k', width: 28 },
@@ -137,56 +137,76 @@ export async function exportToExcel(state) {
   ]
   styleHeaderRow(ws2.getRow(1))
   const e = state.elevator || {}
-  const eb = e.basicInfo || {}
-  applySubHeader(ws2.addRow(['E/V 기초 정보']))
-  ws2.addRows([
-    ['호기', eb.hogiNo],
-    ['대차 개수', eb.cartQty],
-    ['박스 개수', eb.boxQty],
-    ['파렛트 개수', eb.palletQty],
-    ['손수레 개수', eb.handcartQty],
-    ['부하 가중치', eb.weight]
-  ])
+  const dataByHogi = e.dataByHogi || {}
 
-  let evTotal = 0, evMove = 0
-  ws2.addRow([])
-  applySubHeader(ws2.addRow(['E/V 측정 내역']))
-  ws2.addRow(['#', '구분', 'Start', 'End', 'Gap(초)', '추가정보']).eachCell(c => c.style = labelStyle)
-  ;(e.cards || []).forEach((card, idx) => {
-    const gap = parseFloat(getGap(card.start, card.end)) || 0
-    const startStr = card.start ? new Date(card.start).toLocaleTimeString('ko-KR', { hour12: false }) : ''
-    const endStr   = card.end   ? new Date(card.end  ).toLocaleTimeString('ko-KR', { hour12: false }) : ''
-    const extra = card.type === 'load' ? `자재 종수: ${card.materialCount ?? ''}`
-                : card.type === 'move' ? `${card.floorNo ?? ''}층`
-                : card.type === 'unload' ? `공정: ${card.processNo ?? ''}번` : ''
-    ws2.addRow([idx + 1, CARD_LABELS[card.type] || card.type, startStr, endStr, gap, extra])
-    evTotal += gap
-    if (card.type === 'move') evMove += gap
-  })
+  Object.entries(dataByHogi).forEach(([hogiKey, h]) => {
+    const eb = h.basicInfo || {}
+    applySubHeader(ws2.addRow([`${hogiKey}호기 — 기초 정보`]))
+    ws2.addRows([
+      ['E/V 가로(mm)', eb.evWidth],
+      ['E/V 세로(mm)', eb.evDepth],
+      ['대차 개수', eb.cartQty],
+      ['박스 개수', eb.boxQty],
+      ['파렛트 개수', eb.palletQty],
+      ['손수레 개수', eb.handcartQty],
+      ['E/V 부하 가중치', eb.weight]
+    ])
 
-  const evWeight = n(eb.weight) || 0.8
-  const evRate = (evTotal / (3600 * evWeight)) * 100
-  ws2.addRow([])
-  applySubHeader(ws2.addRow(['E/V 결과']))
-  ws2.addRows([
-    ['총 운반 시간(초)', evTotal.toFixed(1)],
-    ['이동 시간(초)', evMove.toFixed(1)],
-    ['E/V 부하율(%)', evRate.toFixed(1)]
-  ])
-
-  if ((e.photos || []).length > 0) {
+    let evTotal = 0, evMove = 0, cycleCount = 0
     ws2.addRow([])
-    applySubHeader(ws2.addRow(['E/V 사진']))
-    const start = ws2.lastRow.number
-    e.photos.forEach((b64, i) => {
-      try {
-        const ext = b64.startsWith('data:image/jpeg') ? 'jpeg' : 'png'
-        const id = workbook.addImage({ base64: b64, extension: ext })
-        ws2.addImage(id, { tl: { col: 0, row: start + i * 14 + 1 }, ext: { width: 320, height: 240 } })
-      } catch {/* skip */}
+    applySubHeader(ws2.addRow([`${hogiKey}호기 — 측정 내역`]))
+    ;(h.measurements || []).forEach((m, mi) => {
+      cycleCount++
+      ws2.addRow([`${mi + 1}회차`, '#', '구분', 'Start', 'End', 'Gap(초)', '추가정보']).eachCell(c => c.style = labelStyle)
+      ;(m.cards || []).forEach((card, idx) => {
+        const gap = parseFloat(getGap(card.start, card.end)) || 0
+        const startStr = card.start ? new Date(card.start).toLocaleTimeString('ko-KR', { hour12: false }) : ''
+        const endStr   = card.end   ? new Date(card.end  ).toLocaleTimeString('ko-KR', { hour12: false }) : ''
+        const extra = card.type === 'load' ? `자재 종수: ${card.materialCount ?? ''}`
+                    : card.type === 'move' ? `${card.floorNo ?? ''}층`
+                    : card.type === 'unload' ? `공정: ${card.processNo ?? ''}공정` : ''
+        ws2.addRow(['', idx + 1, CARD_LABELS[card.type] || card.type, startStr, endStr, gap, extra])
+        evTotal += gap
+        if (card.type === 'move') evMove += gap
+      })
     })
-    for (let j = 0; j < e.photos.length * 14 + 2; j++) ws2.addRow([])
-  }
+
+    const evWeight = n(eb.weight) || 0.8
+    const evRate = (evTotal / (3600 * evWeight)) * 100
+    /* 적재율 */
+    const evArea = (parseFloat(eb.evWidth) || 0) * (parseFloat(eb.evDepth) || 0)
+    const usedArea = (h.loadItems || []).reduce((acc, it) =>
+      acc + (parseFloat(it.width) || 0) * (parseFloat(it.depth) || 0) * (parseInt(it.qty) || 0), 0)
+    const loadingRate = evArea > 0 ? (usedArea / evArea) * 0.9 * 100 : 0
+
+    ws2.addRow([])
+    applySubHeader(ws2.addRow([`${hogiKey}호기 — 결과`]))
+    ws2.addRows([
+      ['측정 회수', cycleCount],
+      ['총 운반 시간(초)', evTotal.toFixed(1)],
+      ['이동 시간(초)', evMove.toFixed(1)],
+      ['E/V 부하율(%)', evRate.toFixed(1)],
+      ['E/V 면적(m²)', (evArea / 1_000_000).toFixed(1)],
+      ['실 적재 면적(m²)', (usedArea / 1_000_000).toFixed(1)],
+      ['E/V 적재율(%)', loadingRate.toFixed(1)]
+    ])
+
+    if ((h.photos || []).length > 0) {
+      ws2.addRow([])
+      applySubHeader(ws2.addRow([`${hogiKey}호기 — 사진`]))
+      const start = ws2.lastRow.number
+      h.photos.forEach((b64, i) => {
+        try {
+          const ext = b64.startsWith('data:image/jpeg') ? 'jpeg' : 'png'
+          const id = workbook.addImage({ base64: b64, extension: ext })
+          ws2.addImage(id, { tl: { col: 0, row: start + i * 14 + 1 }, ext: { width: 320, height: 240 } })
+        } catch {/* skip */}
+      })
+      for (let j = 0; j < h.photos.length * 14 + 2; j++) ws2.addRow([])
+    }
+    ws2.addRow([])
+    ws2.addRow([])
+  })
 
   /* ─── 3. 면적 효율 ─── */
   const ws3 = workbook.addWorksheet('3.면적 효율')

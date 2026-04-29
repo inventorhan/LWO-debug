@@ -210,6 +210,59 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* 라벨 줄: 라벨 옆에 mini-btn(명단관리/운반관리)이 있어도 끝선 통일 */
+.input-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 26px;
+  gap: 6px;
+}
+
+.mini-btn {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mini-btn:hover { background: #e2e8f0; }
+
+/* 차트 모드 토글 (누적/평균) */
+.chart-mode-toggle {
+  display: inline-flex;
+  margin: 0 auto 12px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  gap: 2px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.chart-mode-btn {
+  height: 32px;
+  padding: 0 18px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.chart-mode-btn.active {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
 .input-field {
   height: var(--touch-target);
   border: 1px solid var(--color-card-border);

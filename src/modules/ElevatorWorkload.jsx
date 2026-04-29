@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { getGap } from '../shared/utils/common'
 import TimerSection from '../shared/components/TimerSection'
 import PhotoSection from '../shared/components/PhotoSection'
@@ -14,85 +14,159 @@ const COLORS = {
   load: '#f59e0b',
   move: '#3b82f6',
   unload: '#ea580c',
-  recovery: '#ef4444'
+  recovery: '#8b6914'  /* 똥색 */
 }
 
-export default function ElevatorWorkload({ data, updateData, addPhoto, removePhoto }) {
-  const basicInfo = data.basicInfo || {}
-  const cards = data.cards || []
-  const photos = data.photos || []
+const WEIGHT_OPTIONS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+const ITEM_TYPES = ['박스', '대차', '파렛트', '손수레']
 
-  const setBasicInfo = useCallback((upd) => {
-    updateData({ basicInfo: { ...basicInfo, ...upd } })
-  }, [basicInfo, updateData])
+export default function ElevatorWorkload({
+  data,
+  /* 호기 단위 액션 */
+  switchHogi, updateElevatorBasic,
+  addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
+  addElevatorCard, removeElevatorCard,
+  addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem,
+  /* 사진 (active hogi에 자동 적용됨) */
+  addPhoto, removePhoto
+}) {
+  const activeHogi = data.activeHogi || 1
+  const hogiKey = String(activeHogi)
+  const cur = data.dataByHogi?.[hogiKey] || {
+    basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+    measurements: [],
+    loadItems: [],
+    photos: []
+  }
+  const basicInfo = cur.basicInfo || {}
+  const measurements = cur.measurements || []
+  const loadItems = cur.loadItems || []
+  const photos = cur.photos || []
 
-  const updateCard = useCallback((cardId, updates) => {
-    updateData({ cards: cards.map(c => c.id === cardId ? { ...c, ...updates } : c) })
-  }, [cards, updateData])
+  const [activeCycleId, setActiveCycleId] = useState(null)
+  const effectiveCycleId = activeCycleId && measurements.find(m => m.id === activeCycleId)
+    ? activeCycleId
+    : (measurements[measurements.length - 1]?.id || null)
+  const activeCycle = measurements.find(m => m.id === effectiveCycleId)
+  const activeIndex = activeCycle ? measurements.findIndex(m => m.id === effectiveCycleId) + 1 : 0
 
-  const addCard = useCallback((type) => {
-    const newCard = {
-      id: `ev-${type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      type, start: null, end: null,
-      ...(type === 'load' ? { materialCount: '' }
-         : type === 'unload' ? { processNo: 1 }
-         : type === 'move' ? { floorNo: 1 } : {})
+  const handleAddCycle = useCallback(() => {
+    addElevatorCycle()
+    setActiveCycleId(null)
+  }, [addElevatorCycle])
+
+  const handleDeleteCycle = useCallback((id) => {
+    if (measurements.length <= 1) return
+    if (window.confirm(`${activeIndex}회차의 모든 측정 데이터가 삭제됩니다. 계속하시겠습니까?`)) {
+      removeElevatorCycle(id)
+      setActiveCycleId(null)
     }
-    updateData({ cards: [...cards, newCard] })
-  }, [cards, updateData])
+  }, [measurements.length, activeIndex, removeElevatorCycle])
 
-  const removeCard = useCallback((cardId) => {
-    if (window.confirm('카드를 삭제하시겠습니까?')) {
-      updateData({ cards: cards.filter(c => c.id !== cardId) })
-    }
-  }, [cards, updateData])
-
-  const totalTransportSec = cards.reduce((sum, card) => sum + (parseFloat(getGap(card.start, card.end)) || 0), 0)
-  const moveSec = cards.filter(c => c.type === 'move')
-    .reduce((sum, c) => sum + (parseFloat(getGap(c.start, c.end)) || 0), 0)
+  /* ── 합산 계산 ── */
+  const totalTransportSec = measurements.reduce((sum, m) =>
+    sum + (m.cards?.reduce((cs, c) => cs + (parseFloat(getGap(c.start, c.end)) || 0), 0) || 0), 0)
+  const moveSec = measurements.reduce((sum, m) =>
+    sum + (m.cards?.filter(c => c.type === 'move')
+      .reduce((cs, c) => cs + (parseFloat(getGap(c.start, c.end)) || 0), 0) || 0), 0)
   const weight = parseFloat(basicInfo.weight) || 0.8
   const weightedTime = 3600 * weight
   const workloadRate = weightedTime > 0 ? ((totalTransportSec / weightedTime) * 100) : 0
+
+  /* ── E/V 면적·적재율 계산 ── */
+  const evAreaMm2 = (parseFloat(basicInfo.evWidth) || 0) * (parseFloat(basicInfo.evDepth) || 0)
+  const evAreaM2 = evAreaMm2 / 1_000_000
+  const usedAreaMm2 = loadItems.reduce((acc, it) => {
+    const a = (parseFloat(it.width) || 0) * (parseFloat(it.depth) || 0)
+    return acc + a * (parseInt(it.qty) || 0)
+  }, 0)
+  const usedAreaM2 = usedAreaMm2 / 1_000_000
+  const loadingRate = (evAreaMm2 > 0)
+    ? ((usedAreaMm2 / evAreaMm2) * 0.9 * 100)
+    : null
+
+  /* ── 호기별 통계 (대시보드) ── */
+  const hogiStats = Object.entries(data.dataByHogi || {}).map(([k, h]) => {
+    const ms = h.measurements || []
+    let loadT = 0, moveT2 = 0, unloadT = 0, recoverT = 0
+    ms.forEach(m => m.cards?.forEach(c => {
+      const g = parseFloat(getGap(c.start, c.end)) || 0
+      if (c.type === 'load') loadT += g
+      else if (c.type === 'move') moveT2 += g
+      else if (c.type === 'unload') unloadT += g
+      else if (c.type === 'recovery') recoverT += g
+    }))
+    const totalT = loadT + moveT2 + unloadT + recoverT
+    const wgt = parseFloat(h.basicInfo?.weight) || 0.8
+    const wlRate = (3600 * wgt) > 0 ? (totalT / (3600 * wgt) * 100) : 0
+    return { hogi: parseInt(k), totalT, loadT, moveT2, unloadT, recoverT, wlRate }
+  }).sort((a, b) => a.hogi - b.hogi)
+
+  const maxT = Math.max(1, ...hogiStats.map(h => h.totalT))
+
+  const renderSeg = (val, total, color) => {
+    if (val <= 0 || total <= 0) return null
+    const pct = (val / total) * 100
+    return <div style={{ height: `${pct}%`, width: '100%', background: color }} />
+  }
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <div className="module-title">Elevator 부하율 산출</div>
 
+      {/* 호기 선택 탭 */}
       <div className="section-card">
-        <div className="section-title">기초 정보 입력</div>
+        <div className="section-title">호기 선택</div>
+        <div className="cycle-tabs-container">
+          {Array.from({ length: 9 }, (_, i) => i + 1).map(h => (
+            <button key={h} onClick={() => switchHogi(h)}
+              className={`cycle-tab-btn ${activeHogi === h ? 'active' : ''}`}
+              style={{ padding: '0 12px', minWidth: 'auto', height: 38, fontSize: '0.85rem' }}
+            >{h}호기</button>
+          ))}
+        </div>
+      </div>
+
+      {/* 기초 정보 */}
+      <div className="section-card">
+        <div className="section-title">{activeHogi}호기 — 기초 정보</div>
         <div className="input-grid">
           <div className="input-group">
-            <span className="input-label">E/V 호기 (1~9)</span>
-            <select className="input-field" value={basicInfo.hogiNo ?? 1}
-              onChange={e => setBasicInfo({ hogiNo: parseInt(e.target.value) })}>
-              {Array.from({ length: 9 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}호기</option>)}
-            </select>
+            <div className="input-label-row"><span className="input-label">E/V 가로 (mm)</span></div>
+            <input className="input-field" type="number" min={0} value={basicInfo.evWidth ?? ''}
+              onChange={e => updateElevatorBasic({ evWidth: e.target.value })} placeholder="예: 2200" />
           </div>
           <div className="input-group">
-            <span className="input-label">대차 개수</span>
+            <div className="input-label-row"><span className="input-label">E/V 세로 (mm)</span></div>
+            <input className="input-field" type="number" min={0} value={basicInfo.evDepth ?? ''}
+              onChange={e => updateElevatorBasic({ evDepth: e.target.value })} placeholder="예: 1500" />
+          </div>
+          <div className="input-group">
+            <div className="input-label-row"><span className="input-label">대차 개수</span></div>
             <input className="input-field" type="number" min={0} value={basicInfo.cartQty ?? 0}
-              onChange={e => setBasicInfo({ cartQty: e.target.value })} />
+              onChange={e => updateElevatorBasic({ cartQty: e.target.value })} />
           </div>
           <div className="input-group">
-            <span className="input-label">박스 개수</span>
+            <div className="input-label-row"><span className="input-label">박스 개수</span></div>
             <input className="input-field" type="number" min={0} value={basicInfo.boxQty ?? 0}
-              onChange={e => setBasicInfo({ boxQty: e.target.value })} />
+              onChange={e => updateElevatorBasic({ boxQty: e.target.value })} />
           </div>
           <div className="input-group">
-            <span className="input-label">파렛트 개수</span>
+            <div className="input-label-row"><span className="input-label">파렛트 개수</span></div>
             <input className="input-field" type="number" min={0} value={basicInfo.palletQty ?? 0}
-              onChange={e => setBasicInfo({ palletQty: e.target.value })} />
+              onChange={e => updateElevatorBasic({ palletQty: e.target.value })} />
           </div>
           <div className="input-group">
-            <span className="input-label">손수레 개수</span>
+            <div className="input-label-row"><span className="input-label">손수레 개수</span></div>
             <input className="input-field" type="number" min={0} value={basicInfo.handcartQty ?? 0}
-              onChange={e => setBasicInfo({ handcartQty: e.target.value })} />
+              onChange={e => updateElevatorBasic({ handcartQty: e.target.value })} />
           </div>
-          <div className="input-group">
-            <span className="input-label">부하 가중치 (0~1)</span>
-            <input className="input-field" type="number" step="0.1" min={0.1} max={1}
-              value={basicInfo.weight ?? 0.8}
-              onChange={e => setBasicInfo({ weight: parseFloat(e.target.value) || 0.8 })} />
+          <div className="input-group full-width">
+            <div className="input-label-row"><span className="input-label">E/V 부하 가중치 (0~1)</span></div>
+            <select className="input-field" value={basicInfo.weight ?? 0.8}
+              onChange={e => updateElevatorBasic({ weight: parseFloat(e.target.value) })}>
+              {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w.toFixed(1)}</option>)}
+            </select>
           </div>
           <div className="input-group full-width">
             <PhotoSection title="호기 적재 사진" photos={photos} onAdd={addPhoto} onRemove={removePhoto} />
@@ -100,8 +174,72 @@ export default function ElevatorWorkload({ data, updateData, addPhoto, removePho
         </div>
       </div>
 
+      {/* E/V 적재율 자동 계산 */}
       <div className="section-card">
-        <div className="section-title">측정 결과 <span className="sub-title">| 누적 합산</span></div>
+        <div className="section-title">E/V 적재율 자동 계산</div>
+        <div className="input-grid">
+          <div className="result-box tone-slate">
+            <span className="result-box__label">E/V 면적 = 가로 × 세로</span>
+            <span className="result-box__value">{evAreaM2 > 0 ? `${evAreaM2.toFixed(1)} m²` : '—'}</span>
+          </div>
+          <div className="result-box tone-blue">
+            <span className="result-box__label">실제 사용 적재 면적</span>
+            <span className="result-box__value">{usedAreaM2 > 0 ? `${usedAreaM2.toFixed(1)} m²` : '—'}</span>
+          </div>
+          <div className="result-box full-width" style={{ background: '#0f766e' }}>
+            <span className="result-box__label">E/V 적재율 = 실적재 / E/V 면적 × 0.9</span>
+            <span className="result-box__value">{loadingRate !== null ? `${loadingRate.toFixed(1)}%` : '—'}</span>
+          </div>
+        </div>
+
+        {/* 적재 항목 입력 */}
+        <div style={{ height: 1, background: 'var(--color-card-border)', margin: '14px 0' }} />
+        <div className="section-title" style={{ marginBottom: 8 }}>실 적재 항목 입력</div>
+        {loadItems.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 12, color: '#64748b', fontSize: '0.85rem' }}>
+            아래 버튼으로 박스 / 대차 / 파렛트 항목을 추가해 주세요.
+          </div>
+        )}
+        {loadItems.map((it, idx) => (
+          <div key={it.id} className="section-card" style={{ background: 'white', margin: '0 0 10px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>적재 #{idx + 1}</span>
+              <button onClick={() => removeElevatorLoadItem(it.id)}
+                style={{ border: 'none', background: 'none', color: '#94a3b8', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
+            </div>
+            <div className="input-grid">
+              <div className="input-group">
+                <div className="input-label-row"><span className="input-label">종류</span></div>
+                <select className="input-field" value={it.type}
+                  onChange={e => updateElevatorLoadItem(it.id, { type: e.target.value })}>
+                  {ITEM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="input-group">
+                <div className="input-label-row"><span className="input-label">개수</span></div>
+                <input className="input-field" type="number" min={1} value={it.qty}
+                  onChange={e => updateElevatorLoadItem(it.id, { qty: e.target.value })} />
+              </div>
+              <div className="input-group">
+                <div className="input-label-row"><span className="input-label">가로 (mm)</span></div>
+                <input className="input-field" type="number" min={0} value={it.width}
+                  onChange={e => updateElevatorLoadItem(it.id, { width: e.target.value })} />
+              </div>
+              <div className="input-group">
+                <div className="input-label-row"><span className="input-label">세로 (mm)</span></div>
+                <input className="input-field" type="number" min={0} value={it.depth}
+                  onChange={e => updateElevatorLoadItem(it.id, { depth: e.target.value })} />
+              </div>
+            </div>
+          </div>
+        ))}
+        <button className="btn" style={{ width: '100%', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', marginTop: 4 }}
+          onClick={addElevatorLoadItem}>＋ 적재 항목 추가</button>
+      </div>
+
+      {/* 측정 결과 (누적 합산) */}
+      <div className="section-card">
+        <div className="section-title">측정 결과 <span className="sub-title">| 누적 합산 ({measurements.length}회)</span></div>
         <div className="input-grid">
           <div className="result-box">
             <span className="result-box__label">총 운반 시간</span>
@@ -122,36 +260,59 @@ export default function ElevatorWorkload({ data, updateData, addPhoto, removePho
         </div>
       </div>
 
+      {/* 측정 내역 (회차) */}
       <div className="section-card">
-        <div className="section-title">측정 내역 <span className="sub-title">| {cards.length}건</span></div>
-
-        {cards.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 24, color: '#64748b', fontSize: '0.9rem' }}>
-            아래 버튼으로 측정 카드를 추가해 주세요.
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <div className="section-title" style={{ marginBottom: 0, border: 'none', paddingBottom: 0 }}>
+            측정 내역 <span className="sub-title">| {measurements.length}회 중 {activeIndex || 0}회차</span>
           </div>
-        )}
+          {measurements.length > 1 && (
+            <button className="btn" onClick={() => handleDeleteCycle(effectiveCycleId)}
+              style={{ height: 32, padding: '0 12px', background: '#fee2e2', color: '#b91c1c', fontSize: '0.78rem' }}>
+              🗑️ 회차삭제
+            </button>
+          )}
+        </div>
 
-        {cards.map((card, idx) => (
+        <div className="cycle-tabs-container">
+          {measurements.map((m, idx) => (
+            <button
+              key={m.id}
+              onClick={() => setActiveCycleId(m.id)}
+              className={`cycle-tab-btn ${effectiveCycleId === m.id ? 'active' : ''}`}
+              title={`${idx + 1}회차`}
+            >{idx + 1}</button>
+          ))}
+          <button onClick={handleAddCycle} className="cycle-tab-btn"
+            style={{ background: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
+            title="회차 추가">+</button>
+        </div>
+
+        {activeCycle?.cards?.map((card, idx) => (
           <TimerSection
             key={card.id}
             title={`${CARD_TITLES[card.type] || card.type} (${idx + 1})`}
             start={card.start}
             end={card.end}
-            onStart={() => updateCard(card.id, { start: Date.now(), end: null })}
-            onEnd={() => updateCard(card.id, { end: Date.now() })}
-            onDelete={() => removeCard(card.id)}
+            onStart={() => updateElevatorCycleCard(effectiveCycleId, card.id, { start: Date.now(), end: null })}
+            onEnd={() => updateElevatorCycleCard(effectiveCycleId, card.id, { end: Date.now() })}
+            onDelete={() => {
+              if (window.confirm('이 카드를 삭제하시겠습니까?')) {
+                removeElevatorCard(effectiveCycleId, card.id)
+              }
+            }}
             extraInputs={
               card.type === 'load' ? (
                 <div className="input-group">
                   <span className="input-label">자재 종수</span>
                   <input className="input-field" type="number" min={0} value={card.materialCount ?? ''}
-                    onChange={e => updateCard(card.id, { materialCount: e.target.value })} />
+                    onChange={e => updateElevatorCycleCard(effectiveCycleId, card.id, { materialCount: e.target.value })} />
                 </div>
               ) : card.type === 'move' ? (
                 <div className="input-group">
                   <span className="input-label">층 선택 (1~10)</span>
                   <select className="input-field" value={card.floorNo ?? 1}
-                    onChange={e => updateCard(card.id, { floorNo: parseInt(e.target.value) })}>
+                    onChange={e => updateElevatorCycleCard(effectiveCycleId, card.id, { floorNo: parseInt(e.target.value) })}>
                     {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}층</option>)}
                   </select>
                 </div>
@@ -159,8 +320,8 @@ export default function ElevatorWorkload({ data, updateData, addPhoto, removePho
                 <div className="input-group">
                   <span className="input-label">공정 번호 (1~10)</span>
                   <select className="input-field" value={card.processNo ?? 1}
-                    onChange={e => updateCard(card.id, { processNo: parseInt(e.target.value) })}>
-                    {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}번</option>)}
+                    onChange={e => updateElevatorCycleCard(effectiveCycleId, card.id, { processNo: parseInt(e.target.value) })}>
+                    {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}공정</option>)}
                   </select>
                 </div>
               ) : null
@@ -169,12 +330,69 @@ export default function ElevatorWorkload({ data, updateData, addPhoto, removePho
         ))}
 
         <div className="input-grid" style={{ marginTop: 12, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
-          <button className="btn" style={{ background: COLORS.load, color: 'white', fontSize: '0.85rem' }} onClick={() => addCard('load')}>+ 로딩</button>
-          <button className="btn" style={{ background: COLORS.move, color: 'white', fontSize: '0.85rem' }} onClick={() => addCard('move')}>+ 이동</button>
-          <button className="btn" style={{ background: COLORS.unload, color: 'white', fontSize: '0.85rem' }} onClick={() => addCard('unload')}>+ 언로딩</button>
-          <button className="btn" style={{ background: COLORS.recovery, color: 'white', fontSize: '0.85rem' }} onClick={() => addCard('recovery')}>+ 회수</button>
+          <button className="btn" style={{ background: COLORS.load, color: 'white', fontSize: '0.85rem' }} onClick={() => effectiveCycleId && addElevatorCard(effectiveCycleId, 'load')}>+ 로딩</button>
+          <button className="btn" style={{ background: COLORS.move, color: 'white', fontSize: '0.85rem' }} onClick={() => effectiveCycleId && addElevatorCard(effectiveCycleId, 'move')}>+ 이동</button>
+          <button className="btn" style={{ background: COLORS.unload, color: 'white', fontSize: '0.85rem' }} onClick={() => effectiveCycleId && addElevatorCard(effectiveCycleId, 'unload')}>+ 언로딩</button>
+          <button className="btn" style={{ background: COLORS.recovery, color: 'white', fontSize: '0.85rem' }} onClick={() => effectiveCycleId && addElevatorCard(effectiveCycleId, 'recovery')}>+ 회수</button>
         </div>
       </div>
+
+      {/* 호기별 그래프 */}
+      {hogiStats.some(h => h.totalT > 0) && (
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '2px dashed #e2e8f0' }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-primary-dark)', textAlign: 'center', padding: '8px 16px 12px' }}>
+            🛗 호기별 부하 분석 대시보드
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+            {Object.entries({ '로딩': COLORS.load, '이동': COLORS.move, '언로딩': COLORS.unload, '회수': COLORS.recovery }).map(([label, color]) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 12, height: 12, background: color, borderRadius: 2 }} />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="section-card" style={{ background: 'white' }}>
+            <div className="section-title">호기별 작업 시간 (초)</div>
+            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
+              {hogiStats.map(h => {
+                const heightPct = maxT > 0 ? Math.max(2, (h.totalT / maxT) * 100) : 2
+                return (
+                  <div key={h.hogi} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#1e293b' }}>{h.totalT.toFixed(0)}s</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#f1f5f9' }}>
+                      {renderSeg(h.loadT, h.totalT, COLORS.load)}
+                      {renderSeg(h.moveT2, h.totalT, COLORS.move)}
+                      {renderSeg(h.unloadT, h.totalT, COLORS.unload)}
+                      {renderSeg(h.recoverT, h.totalT, COLORS.recovery)}
+                    </div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textAlign: 'center', width: '100%' }}>{h.hogi}호기</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="section-card" style={{ background: 'white' }}>
+            <div className="section-title">호기별 부하율 (%)</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {hogiStats.map(h => {
+                const wlColor = h.wlRate > 90 ? '#b91c1c' : h.wlRate > 70 ? '#ea580c' : '#0f766e'
+                return (
+                  <div key={h.hogi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 60, fontSize: '0.78rem', fontWeight: 700, color: '#475569' }}>{h.hogi}호기</span>
+                    <div style={{ flex: 1, height: 22, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min(100, h.wlRate)}%`, height: '100%', background: wlColor, transition: 'width .3s' }} />
+                    </div>
+                    <span style={{ width: 56, fontSize: '0.82rem', fontWeight: 800, color: wlColor, textAlign: 'right' }}>{h.wlRate.toFixed(1)}%</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

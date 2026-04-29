@@ -49,9 +49,49 @@ export function getGap(start, end) {
 }
 
 /**
- * 파일을 Base64로 변환합니다.
+ * 이미지를 캔버스로 리사이즈/JPEG 압축한 base64 문자열을 반환합니다.
+ * - localStorage 용량 초과 방지를 위해 자동 다운스케일.
+ * - 일반 파일은 그대로 base64.
  */
 export const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  if (!file) return reject(new Error('no file'));
+
+  // 이미지 압축 처리
+  if (file.type && file.type.startsWith('image/')) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const MAX = 1280; // long edge
+        let { width: w, height: h } = img;
+        const scale = Math.min(1, MAX / Math.max(w, h));
+        const cw = Math.round(w * scale);
+        const ch = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        URL.revokeObjectURL(url);
+        resolve(dataUrl);
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      // 이미지 로딩 실패 시 원본 base64로 fallback
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = err => reject(err);
+    };
+    img.src = url;
+    return;
+  }
+
+  // 비이미지: 그대로 base64
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = () => resolve(reader.result);
