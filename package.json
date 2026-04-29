@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bump": "node scripts/bump-version.mjs",
+    "bump:patch": "node scripts/bump-version.mjs --patch",
+    "bump:minor": "node scripts/bump-version.mjs --minor",
+    "bump:major": "node scripts/bump-version.mjs --major",
+    "release:apk": "npm run build && npx cap copy android && cd android && gradlew assembleRelease",
+    "release:aab": "npm run build && npx cap copy android && cd android && gradlew bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
