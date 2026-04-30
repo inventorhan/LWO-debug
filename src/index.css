@@ -655,3 +655,56 @@ select.input-field {
 .result-box.tone-blue { background: var(--color-primary); }
 .result-box.tone-slate { background: #475569; }
 .result-box.tone-success { background: #047857; }
+
+/* ===== 재고 모듈 전용 ===== */
+.inv-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 4px 0 12px;
+  display: inline-block;
+}
+
+.inv-divider {
+  position: relative;
+  margin: 18px 0 14px;
+  text-align: center;
+}
+.inv-divider::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+}
+.inv-divider > span {
+  position: relative;
+  background: white;
+  padding: 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.4px;
+}
+
+/* 리드타임 입력+결과 쌍 — 모바일은 수직 / 태블릿+ 는 수평 */
+.inv-lead-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+@media (min-width: 540px) {
+  .inv-lead-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 12px;
+  }
+}
