@@ -208,16 +208,24 @@ body {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 라벨 줄: 라벨 옆에 mini-btn(명단관리/운반관리)이 있어도 끝선 통일 */
+/* 라벨 줄: 라벨 옆에 mini-btn(명단관리/운반관리)이 있어도 끝선 통일.
+   고정 높이 28px 로 모든 행이 동일 높이가 되도록. */
 .input-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 26px;
+  height: 28px;
   gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
+.input-label-row > .input-label { flex: 1 1 auto; min-width: 0; }
+.input-label-row > .mini-btn { flex: 0 0 auto; }
 
 .mini-btn {
   height: 26px;

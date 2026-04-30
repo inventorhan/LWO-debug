@@ -192,7 +192,7 @@ export default function WorkerWorkload({
         <div className="input-grid">
           <div className="input-group">
             <div className="input-label-row">
-              <span className="input-label">물류 인원 (이름)</span>
+              <span className="input-label">물류 인원</span>
               <button className="mini-btn" onClick={() => setIsManagerOpen(true)}>명단관리</button>
             </div>
             <select className="input-field" value={activePersonnel || ''}
@@ -209,7 +209,7 @@ export default function WorkerWorkload({
 
           <div className="input-group">
             <div className="input-label-row">
-              <span className="input-label">운반 종류 (속도 자동)</span>
+              <span className="input-label">운반 종류</span>
               <button className="mini-btn" onClick={() => setIsTransportManagerOpen(true)}>운반관리</button>
             </div>
             <select className="input-field" value={basicInfo.transportType || 'worker'}
