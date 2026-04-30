@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">LWO 물류 분석</string>
     <string name="title_activity_main">LWO 물류 분석</string>
-    <string name="package_name">com.lwo.analysis</string>
-    <string name="custom_url_scheme">com.lwo.analysis</string>
+    <string name="package_name">com.inventorhan.lwo</string>
+    <string name="custom_url_scheme">com.inventorhan.lwo</string>
 </resources>
