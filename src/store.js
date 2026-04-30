@@ -91,6 +91,36 @@ export function useAppState() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
+        // 구버전 area(mm 단위)를 m 단위로 마이그레이션 — 1000 이상 값은 mm로 간주하고 ÷1000
+        const migrateAreaUnit = (parsedArea) => {
+          if (!parsedArea || parsedArea._unit === 'm') return parsedArea
+          const conv = (v) => {
+            const num = parseFloat(v)
+            if (!num) return v
+            return num >= 100 ? +(num / 1000).toFixed(2) : v   /* 100m 이상이면 mm 단위라 판단 */
+          }
+          return {
+            ...parsedArea,
+            _unit: 'm',
+            factory: parsedArea.factory ? {
+              ...parsedArea.factory,
+              width: conv(parsedArea.factory.width),
+              height: conv(parsedArea.factory.height)
+            } : parsedArea.factory,
+            zones: (parsedArea.zones || []).map(z => ({
+              ...z,
+              width: conv(z.width),
+              height: conv(z.height),
+              items: (z.items || []).map(it => ({
+                ...it,
+                width: conv(it.width),
+                depth: conv(it.depth),
+                minHeight: conv(it.minHeight),
+                maxHeight: conv(it.maxHeight ?? it.height)
+              }))
+            }))
+          }
+        }
         // 구버전 elevator(단일 cards)를 호기별 구조로 마이그레이션
         let migratedElevator = parsed.elevator
         if (migratedElevator && Array.isArray(migratedElevator.cards) && !migratedElevator.dataByHogi) {
@@ -121,7 +151,7 @@ export function useAppState() {
             dataByPersonnel: (parsed.worker && parsed.worker.dataByPersonnel) || initialState.worker.dataByPersonnel
           },
           elevator:  { ...initialState.elevator, ...(migratedElevator || {}) },
-          area:      { ...initialState.area, ...(parsed.area || {}) },
+          area:      { ...initialState.area, ...(migrateAreaUnit(parsed.area) || {}) },
           inventory: { ...initialState.inventory, ...(parsed.inventory || {}) },
           amr:       { ...initialState.amr, ...(parsed.amr || {}) }
         })

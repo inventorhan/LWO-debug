@@ -13,11 +13,16 @@ function emptyItem() {
   return { type: '박스', qty: 1, minHeight: '', maxHeight: '', volWeight: 0.8, width: '', depth: '', photo: null }
 }
 
-/* mm² → m² (소수점 1자리) */
-function fmtArea(mm2) {
-  if (mm2 == null || mm2 <= 0) return '—'
-  const m2 = mm2 / 1_000_000
+/* m² 그대로 표시 (소수점 1자리) */
+function fmtArea(m2) {
+  if (m2 == null || m2 <= 0) return '—'
   return `${m2.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`
+}
+
+/* 높이(m, 소수점 1자리) */
+function fmtMeter(m) {
+  if (m == null || isNaN(m) || m <= 0) return '—'
+  return `${m.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m`
 }
 
 export default function AreaEfficiency({ data, updateData }) {
@@ -66,7 +71,7 @@ export default function AreaEfficiency({ data, updateData }) {
   const curZone = zones[safeActiveZone]
   const zoneArea = curZone ? calcArea(curZone.width, curZone.height) : null
 
-  /* 체적 효율: (최고높이 - 최저높이) × 체적가중치 — 항목별 누적 후 평균 */
+  /* 체적 효율: (최고높이 - 최저높이) × 체적가중치 — 모든 단위는 m */
   const volumeStats = (curZone?.items || []).map(it => {
     const lo = parseFloat(it.minHeight)
     const hi = parseFloat(it.maxHeight)
@@ -84,10 +89,11 @@ export default function AreaEfficiency({ data, updateData }) {
     ? volumeStats.reduce((acc, v) => acc + v.usedPct, 0) / volumeStats.length
     : null
 
-  /* 호환성: 기존 cubicRate (자료 호환) */
-  const heights = (curZone?.items || []).map(i => parseFloat(i.maxHeight)).filter(h => !isNaN(h) && h > 0)
-  const minHeight = heights.length ? Math.min(...heights) : null
-  const maxHeight = heights.length ? Math.max(...heights) : null
+  /* 전체 최저/최고 (m 단위) */
+  const allMinHeights = (curZone?.items || []).map(i => parseFloat(i.minHeight)).filter(h => !isNaN(h) && h > 0)
+  const allMaxHeights = (curZone?.items || []).map(i => parseFloat(i.maxHeight)).filter(h => !isNaN(h) && h > 0)
+  const minHeight = allMinHeights.length ? Math.min(...allMinHeights) : null
+  const maxHeight = allMaxHeights.length ? Math.max(...allMaxHeights) : null
 
   const PhotoButton = ({ photo, onChange, label = '사진 촬영' }) => (
     <label className="btn" style={{
@@ -116,14 +122,14 @@ export default function AreaEfficiency({ data, updateData }) {
         <div className="section-title">공장 면적 입력</div>
         <div className="input-grid">
           <div className="input-group">
-            <span className="input-label">가로 (mm)</span>
-            <input className="input-field" type="number" min={0} value={factory.width}
-              onChange={e => setFactory({ width: e.target.value })} placeholder="예: 50000" />
+            <span className="input-label">가로 (m)</span>
+            <input className="input-field" type="number" step="0.1" min={0} value={factory.width}
+              onChange={e => setFactory({ width: e.target.value })} placeholder="예: 50.0" />
           </div>
           <div className="input-group">
-            <span className="input-label">세로 (mm)</span>
-            <input className="input-field" type="number" min={0} value={factory.height}
-              onChange={e => setFactory({ height: e.target.value })} placeholder="예: 30000" />
+            <span className="input-label">세로 (m)</span>
+            <input className="input-field" type="number" step="0.1" min={0} value={factory.height}
+              onChange={e => setFactory({ height: e.target.value })} placeholder="예: 30.0" />
           </div>
           <div className="input-group full-width">
             <div className="result-box tone-dark">
@@ -184,14 +190,14 @@ export default function AreaEfficiency({ data, updateData }) {
                 <input className="input-field" type="text" value={curZone.no} readOnly />
               </div>
               <div className="input-group">
-                <span className="input-label">가로 (mm)</span>
-                <input className="input-field" type="number" min={0} value={curZone.width}
-                  onChange={e => updateZone(safeActiveZone, { width: e.target.value })} placeholder="예: 10000" />
+                <span className="input-label">가로 (m)</span>
+                <input className="input-field" type="number" step="0.1" min={0} value={curZone.width}
+                  onChange={e => updateZone(safeActiveZone, { width: e.target.value })} placeholder="예: 10.0" />
               </div>
               <div className="input-group">
-                <span className="input-label">세로 (mm)</span>
-                <input className="input-field" type="number" min={0} value={curZone.height}
-                  onChange={e => updateZone(safeActiveZone, { height: e.target.value })} placeholder="예: 8000" />
+                <span className="input-label">세로 (m)</span>
+                <input className="input-field" type="number" step="0.1" min={0} value={curZone.height}
+                  onChange={e => updateZone(safeActiveZone, { height: e.target.value })} placeholder="예: 8.0" />
               </div>
               <div className="input-group">
                 <span className="input-label">구역 사진</span>
@@ -242,24 +248,24 @@ export default function AreaEfficiency({ data, updateData }) {
                         onChange={e => updateItem(safeActiveZone, iIdx, { qty: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <div className="input-label-row"><span className="input-label">가로 (mm)</span></div>
-                      <input className="input-field" type="number" min={0} value={item.width}
-                        onChange={e => updateItem(safeActiveZone, iIdx, { width: e.target.value })} />
+                      <div className="input-label-row"><span className="input-label">가로 (m)</span></div>
+                      <input className="input-field" type="number" step="0.1" min={0} value={item.width}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { width: e.target.value })} placeholder="예: 1.2" />
                     </div>
                     <div className="input-group">
-                      <div className="input-label-row"><span className="input-label">세로 (mm)</span></div>
-                      <input className="input-field" type="number" min={0} value={item.depth}
-                        onChange={e => updateItem(safeActiveZone, iIdx, { depth: e.target.value })} />
+                      <div className="input-label-row"><span className="input-label">세로 (m)</span></div>
+                      <input className="input-field" type="number" step="0.1" min={0} value={item.depth}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { depth: e.target.value })} placeholder="예: 0.8" />
                     </div>
                     <div className="input-group">
-                      <div className="input-label-row"><span className="input-label">최저 높이 (mm)</span></div>
-                      <input className="input-field" type="number" min={0} value={item.minHeight ?? ''}
-                        onChange={e => updateItem(safeActiveZone, iIdx, { minHeight: e.target.value })} />
+                      <div className="input-label-row"><span className="input-label">최저 높이 (m)</span></div>
+                      <input className="input-field" type="number" step="0.1" min={0} value={item.minHeight ?? ''}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { minHeight: e.target.value })} placeholder="예: 0.5" />
                     </div>
                     <div className="input-group">
-                      <div className="input-label-row"><span className="input-label">최고 높이 (mm)</span></div>
-                      <input className="input-field" type="number" min={0} value={item.maxHeight ?? ''}
-                        onChange={e => updateItem(safeActiveZone, iIdx, { maxHeight: e.target.value })} />
+                      <div className="input-label-row"><span className="input-label">최고 높이 (m)</span></div>
+                      <input className="input-field" type="number" step="0.1" min={0} value={item.maxHeight ?? ''}
+                        onChange={e => updateItem(safeActiveZone, iIdx, { maxHeight: e.target.value })} placeholder="예: 1.7" />
                     </div>
                     <div className="input-group">
                       <div className="input-label-row"><span className="input-label">체적 가중치</span></div>
@@ -282,7 +288,7 @@ export default function AreaEfficiency({ data, updateData }) {
                     <div className="input-group full-width">
                       <div className="result-box tone-slate">
                         <span className="result-box__label">체적 손실량 = (최고−최저) × 가중치</span>
-                        <span className="result-box__value">{drop !== null ? `${drop.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mm` : '—'}</span>
+                        <span className="result-box__value">{drop !== null ? fmtMeter(drop) : '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -297,11 +303,11 @@ export default function AreaEfficiency({ data, updateData }) {
             <div className="input-grid" style={{ marginTop: 8 }}>
               <div className="result-box tone-blue">
                 <span className="result-box__label">최저 높이 (전체 최소)</span>
-                <span className="result-box__value">{minHeight !== null ? `${(minHeight / 1000).toFixed(1)} m` : '—'}</span>
+                <span className="result-box__value">{fmtMeter(minHeight)}</span>
               </div>
               <div className="result-box tone-blue">
                 <span className="result-box__label">최고 높이 (전체 최대)</span>
-                <span className="result-box__value">{maxHeight !== null ? `${(maxHeight / 1000).toFixed(1)} m` : '—'}</span>
+                <span className="result-box__value">{fmtMeter(maxHeight)}</span>
               </div>
               <div className="result-box full-width tone-dark">
                 <span className="result-box__label">평균 체적 사용율 = ((최고−손실) ÷ 최고) 평균</span>

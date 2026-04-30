@@ -215,28 +215,28 @@ export async function exportToExcel(state) {
     { header: '값1', key: 'v1', width: 18 },
     { header: '값2', key: 'v2', width: 18 },
     { header: '값3', key: 'v3', width: 18 },
-    { header: '면적(mm²)', key: 'a', width: 18 }
+    { header: '면적(m²)', key: 'a', width: 18 }
   ]
   styleHeaderRow(ws3.getRow(1))
   const ar = state.area || {}
-  applySubHeader(ws3.addRow(['공장']))
-  const fA = calcArea(ar.factory?.width, ar.factory?.height)
-  ws3.addRow(['공장', ar.factory?.width, ar.factory?.height, '', fA || ''])
+  applySubHeader(ws3.addRow(['공장 (단위: m)']))
+  const fA = calcArea(ar.factory?.width, ar.factory?.height)  /* m × m = m² */
+  ws3.addRow(['공장', ar.factory?.width, ar.factory?.height, '', fA ? fA.toFixed(1) : ''])
 
   ;(ar.zones || []).forEach((z, i) => {
     ws3.addRow([])
-    applySubHeader(ws3.addRow([`${i + 1}구역`]))
+    applySubHeader(ws3.addRow([`${i + 1}구역 (단위: m)`]))
     const zA = calcArea(z.width, z.height)
-    ws3.addRow(['구역', z.width, z.height, '', zA || ''])
-    ws3.addRow(['적재종류', '개수', '가로', '세로', '높이']).eachCell(c => c.style = labelStyle)
+    ws3.addRow(['구역', z.width, z.height, '', zA ? zA.toFixed(1) : ''])
+    ws3.addRow(['적재종류', '개수', '가로(m)', '세로(m)', '최저높이(m)', '최고높이(m)', '체적가중치']).eachCell(c => c.style = labelStyle)
     let usedArea = 0
     ;(z.items || []).forEach(item => {
       const ia = calcArea(item.width, item.depth)
       usedArea += (ia || 0) * (parseInt(item.qty) || 1)
-      ws3.addRow([item.type, item.qty, item.width, item.depth, item.height])
+      ws3.addRow([item.type, item.qty, item.width, item.depth, item.minHeight ?? '', item.maxHeight ?? item.height ?? '', item.volWeight ?? ''])
     })
     const eff = (zA && usedArea) ? ((usedArea / zA) * 100).toFixed(1) : '—'
-    ws3.addRow(['실사용 면적 합계(mm²)', usedArea.toFixed(0)])
+    ws3.addRow(['실사용 면적 합계(m²)', usedArea.toFixed(1)])
     ws3.addRow(['적재율(%)', eff])
   })
 
