@@ -203,6 +203,7 @@ body {
 }
 
 .input-group.full-width { grid-column: 1 / -1; }
+.result-box.full-width  { grid-column: 1 / -1; }
 
 .input-label {
   font-size: 0.78rem;
