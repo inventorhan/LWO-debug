@@ -6,6 +6,7 @@ import AreaEfficiency from './modules/AreaEfficiency'
 import InventoryStorage from './modules/InventoryStorage'
 import AmrCalculation from './modules/AmrCalculation'
 import { exportToExcel } from './shared/utils/excelExport'
+import { saveJson } from './shared/utils/saveAndShare'
 
 const TABS = [
   { id: 'worker',    label: '작업자 부하율', short: '작업자', icon: '👷' },
@@ -37,17 +38,14 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(''), 2400)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `lwo_analysis_${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      showToast('💾 데이터가 저장되었습니다.')
-    } catch {
+      const filename = `LWO_분석_${new Date().toISOString().slice(0, 10)}.json`
+      const json = JSON.stringify(state, null, 2)
+      const result = await saveJson(filename, json)
+      showToast(`💾 저장 완료 (Documents/LWO/${filename})`)
+    } catch (err) {
+      console.error(err)
       showToast('⚠️ 저장 중 오류가 발생했습니다.')
     }
   }
@@ -81,7 +79,7 @@ export default function App() {
   const handleExportExcel = async () => {
     try {
       await exportToExcel(state)
-      showToast('📊 엑셀 파일이 저장되었습니다.')
+      showToast('📊 엑셀 저장 완료 (Documents/LWO/)')
     } catch (err) {
       console.error(err)
       showToast('⚠️ 엑셀 저장 중 오류가 발생했습니다.')

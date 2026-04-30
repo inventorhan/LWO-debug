@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { saveAs } from 'file-saver'
+import { saveBlob } from './saveAndShare'
 import { getGap, calcArea, n } from './common'
 
 const headerStyle = {
@@ -363,6 +363,12 @@ export async function exportToExcel(state) {
 
   const buffer = await workbook.xlsx.writeBuffer()
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-    `LWO_분석리포트_${ts}.xlsx`)
+  const filename = `LWO_분석리포트_${ts}.xlsx`
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  })
+  return saveBlob(filename, blob, {
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    title: 'LWO 분석 리포트'
+  })
 }
