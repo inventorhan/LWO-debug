@@ -21,8 +21,9 @@ export default function InventoryStorage({ data, updateData }) {
   const selfDayProd   = useMemo(() => n(f.selfDayUph)   * n(f.selfDayTime),   [f.selfDayUph, f.selfDayTime])
   const selfNightProd = useMemo(() => n(f.selfNightUph) * n(f.selfNightTime), [f.selfNightUph, f.selfNightTime])
   const selfDailyProd = useMemo(() => selfDayProd + selfNightProd,             [selfDayProd, selfNightProd])
-  /* 일열 부족 수량 */
-  const shortageQty = useMemo(() => Math.max(0, custDailyProd - selfDailyProd), [custDailyProd, selfDailyProd])
+  /* 일열 부족 수량 (양수=부족, 음수=잉여 → +/- 부호 표시) */
+  const shortageQty = useMemo(() => custDailyProd - selfDailyProd, [custDailyProd, selfDailyProd])
+  const fmtSigned = (v) => v === 0 ? '0대' : `${v > 0 ? '+' : '−'}${Math.abs(Math.round(v)).toLocaleString()}대`
 
   /* 고객 UPH 기준 (시간 → 수량 환산용) */
   const refUph = n(f.customerDayUph)
@@ -143,11 +144,12 @@ export default function InventoryStorage({ data, updateData }) {
 
         <Divider label="기초 재고 산출" />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: '#1e40af', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#0f766e' : '#1e40af', padding: '14px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
               일일 부족 수량 (기초 재고) = 고객 일일 − 자사 일일
+              {shortageQty < 0 && ' · 잉여(자사 초과)'}
             </span>
-            <span className="result-box__value" style={{ fontSize: '1.5rem' }}>{fmtN(shortageQty, '대', 0)}</span>
+            <span className="result-box__value" style={{ fontSize: '1.5rem' }}>{fmtSigned(shortageQty)}</span>
           </div>
         </div>
       </div>
@@ -210,7 +212,7 @@ export default function InventoryStorage({ data, updateData }) {
         <div className="input-grid">
           <div className="result-box tone-blue">
             <span className="result-box__label">① 일일 부족 수량</span>
-            <span className="result-box__value">{fmtN(shortageQty, '대', 0)}</span>
+            <span className="result-box__value">{fmtSigned(shortageQty)}</span>
           </div>
           <div className="result-box tone-blue">
             <span className="result-box__label">② 리드타임 재고</span>

@@ -21,25 +21,38 @@ export default function SplashScreen({ fadeMs = 400 }) {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        backgroundImage: `url(${splashImg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: '#000',
+        background: '#000',
         display: 'flex',
-        alignItems: 'flex-end',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: '12vh',
+        gap: 24,
+        padding: 16,
         opacity: phase === 'fade' ? 0 : 1,
         transition: `opacity ${fadeMs}ms ease`,
         pointerEvents: phase === 'fade' ? 'none' : 'auto'
       }}
     >
+      <img
+        src={splashImg}
+        alt="LWO"
+        style={{
+          maxWidth: '100%',
+          maxHeight: '78vh',
+          width: 'auto',
+          height: 'auto',
+          objectFit: 'contain',
+          userSelect: 'none',
+          WebkitUserDrag: 'none',
+          borderRadius: 8
+        }}
+        draggable={false}
+      />
       <button
         onClick={dismiss}
         style={{
-          padding: '16px 64px',
-          fontSize: '1.2rem',
+          padding: '14px 56px',
+          fontSize: '1.1rem',
           fontWeight: 800,
           color: 'white',
           background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)',
@@ -49,7 +62,8 @@ export default function SplashScreen({ fadeMs = 400 }) {
           cursor: 'pointer',
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
-          animation: 'splashPulse 1.6s ease-in-out infinite'
+          animation: 'splashPulse 1.6s ease-in-out infinite',
+          flexShrink: 0
         }}
       >
         ▶ Start

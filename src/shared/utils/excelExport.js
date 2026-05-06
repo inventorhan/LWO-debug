@@ -143,8 +143,8 @@ export async function exportToExcel(state) {
     const eb = h.basicInfo || {}
     applySubHeader(ws2.addRow([`${hogiKey}호기 — 기초 정보`]))
     ws2.addRows([
-      ['E/V 가로(mm)', eb.evWidth],
-      ['E/V 세로(mm)', eb.evDepth],
+      ['E/V 가로(m)', eb.evWidth],
+      ['E/V 세로(m)', eb.evDepth],
       ['E/V 부하 가중치', eb.weight]
     ])
 
@@ -170,9 +170,9 @@ export async function exportToExcel(state) {
     const evWeight = n(eb.weight) || 0.8
     const evRate = (evTotal / (3600 * evWeight)) * 100
     /* 적재율 */
-    const evArea = (parseFloat(eb.evWidth) || 0) * (parseFloat(eb.evDepth) || 0)
+    const evArea = (parseFloat(eb.evWidth) || 0) * (parseFloat(eb.evDepth) || 0)  // m²
     const usedArea = (h.loadItems || []).reduce((acc, it) =>
-      acc + (parseFloat(it.width) || 0) * (parseFloat(it.depth) || 0) * (parseInt(it.qty) || 0), 0)
+      acc + (parseFloat(it.width) || 0) * (parseFloat(it.depth) || 0) * (parseInt(it.qty) || 0), 0)  // m²
     const loadingRate = evArea > 0 ? (usedArea / evArea) * 0.9 * 100 : 0
 
     ws2.addRow([])
@@ -182,8 +182,8 @@ export async function exportToExcel(state) {
       ['총 운반 시간(초)', evTotal.toFixed(1)],
       ['이동 시간(초)', evMove.toFixed(1)],
       ['E/V 부하율(%)', evRate.toFixed(1)],
-      ['E/V 면적(m²)', (evArea / 1_000_000).toFixed(1)],
-      ['실 적재 면적(m²)', (usedArea / 1_000_000).toFixed(1)],
+      ['E/V 면적(m²)', evArea.toFixed(1)],
+      ['실 적재 면적(m²)', usedArea.toFixed(1)],
       ['E/V 적재율(%)', loadingRate.toFixed(1)]
     ])
 

@@ -73,16 +73,14 @@ export default function ElevatorWorkload({
   const weightedTime = 3600 * weight
   const workloadRate = weightedTime > 0 ? ((totalTransportSec / weightedTime) * 100) : 0
 
-  /* ── E/V 면적·적재율 계산 ── */
-  const evAreaMm2 = (parseFloat(basicInfo.evWidth) || 0) * (parseFloat(basicInfo.evDepth) || 0)
-  const evAreaM2 = evAreaMm2 / 1_000_000
-  const usedAreaMm2 = loadItems.reduce((acc, it) => {
+  /* ── E/V 면적·적재율 계산 (단위: m) ── */
+  const evAreaM2 = (parseFloat(basicInfo.evWidth) || 0) * (parseFloat(basicInfo.evDepth) || 0)
+  const usedAreaM2 = loadItems.reduce((acc, it) => {
     const a = (parseFloat(it.width) || 0) * (parseFloat(it.depth) || 0)
     return acc + a * (parseInt(it.qty) || 0)
   }, 0)
-  const usedAreaM2 = usedAreaMm2 / 1_000_000
-  const loadingRate = (evAreaMm2 > 0)
-    ? ((usedAreaMm2 / evAreaMm2) * 0.9 * 100)
+  const loadingRate = (evAreaM2 > 0)
+    ? ((usedAreaM2 / evAreaM2) * 0.9 * 100)
     : null
 
   /* ── 호기별 통계 (대시보드) ── */
@@ -132,14 +130,14 @@ export default function ElevatorWorkload({
         <div className="section-title">{activeHogi}호기 — 기초 정보</div>
         <div className="input-grid">
           <div className="input-group">
-            <div className="input-label-row"><span className="input-label">E/V 가로 (mm)</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.evWidth ?? ''}
-              onChange={e => updateElevatorBasic({ evWidth: e.target.value })} placeholder="예: 2200" />
+            <div className="input-label-row"><span className="input-label">E/V 가로 (m)</span></div>
+            <input className="input-field" type="number" step="0.1" min={0} value={basicInfo.evWidth ?? ''}
+              onChange={e => updateElevatorBasic({ evWidth: e.target.value })} placeholder="예: 2.2" />
           </div>
           <div className="input-group">
-            <div className="input-label-row"><span className="input-label">E/V 세로 (mm)</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.evDepth ?? ''}
-              onChange={e => updateElevatorBasic({ evDepth: e.target.value })} placeholder="예: 1500" />
+            <div className="input-label-row"><span className="input-label">E/V 세로 (m)</span></div>
+            <input className="input-field" type="number" step="0.1" min={0} value={basicInfo.evDepth ?? ''}
+              onChange={e => updateElevatorBasic({ evDepth: e.target.value })} placeholder="예: 1.5" />
           </div>
           <div className="input-group full-width">
             <PhotoSection title="호기 적재 사진" photos={photos} onAdd={addPhoto} onRemove={removePhoto} />
@@ -194,14 +192,14 @@ export default function ElevatorWorkload({
                   onChange={e => updateElevatorLoadItem(it.id, { qty: e.target.value })} />
               </div>
               <div className="input-group">
-                <div className="input-label-row"><span className="input-label">가로 (mm)</span></div>
-                <input className="input-field" type="number" min={0} value={it.width}
-                  onChange={e => updateElevatorLoadItem(it.id, { width: e.target.value })} />
+                <div className="input-label-row"><span className="input-label">가로 (m)</span></div>
+                <input className="input-field" type="number" step="0.1" min={0} value={it.width}
+                  onChange={e => updateElevatorLoadItem(it.id, { width: e.target.value })} placeholder="예: 1.2" />
               </div>
               <div className="input-group">
-                <div className="input-label-row"><span className="input-label">세로 (mm)</span></div>
-                <input className="input-field" type="number" min={0} value={it.depth}
-                  onChange={e => updateElevatorLoadItem(it.id, { depth: e.target.value })} />
+                <div className="input-label-row"><span className="input-label">세로 (m)</span></div>
+                <input className="input-field" type="number" step="0.1" min={0} value={it.depth}
+                  onChange={e => updateElevatorLoadItem(it.id, { depth: e.target.value })} placeholder="예: 0.8" />
               </div>
             </div>
           </div>

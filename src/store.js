@@ -149,6 +149,27 @@ export function useAppState() {
             }
           }
         }
+        // E/V 단위 mm → m 마이그레이션 (100 이상이면 mm로 간주)
+        if (migratedElevator && migratedElevator.dataByHogi && migratedElevator._unit !== 'm') {
+          const convM = (v) => {
+            const num = parseFloat(v)
+            if (!num) return v
+            return num >= 100 ? +(num / 1000).toFixed(2) : v
+          }
+          const next = {}
+          Object.entries(migratedElevator.dataByHogi).forEach(([k, h]) => {
+            next[k] = {
+              ...h,
+              basicInfo: h.basicInfo
+                ? { ...h.basicInfo, evWidth: convM(h.basicInfo.evWidth), evDepth: convM(h.basicInfo.evDepth) }
+                : h.basicInfo,
+              loadItems: (h.loadItems || []).map(it => ({
+                ...it, width: convM(it.width), depth: convM(it.depth)
+              }))
+            }
+          })
+          migratedElevator = { ...migratedElevator, _unit: 'm', dataByHogi: next }
+        }
         setState({
           ...initialState,
           ...parsed,
