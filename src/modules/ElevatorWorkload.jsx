@@ -33,7 +33,7 @@ export default function ElevatorWorkload({
   const activeHogi = data.activeHogi || 1
   const hogiKey = String(activeHogi)
   const cur = data.dataByHogi?.[hogiKey] || {
-    basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+    basicInfo: { weight: 0.8, evWidth: '', evDepth: '' },
     measurements: [],
     loadItems: [],
     photos: []
@@ -141,33 +141,6 @@ export default function ElevatorWorkload({
             <input className="input-field" type="number" min={0} value={basicInfo.evDepth ?? ''}
               onChange={e => updateElevatorBasic({ evDepth: e.target.value })} placeholder="예: 1500" />
           </div>
-          <div className="input-group">
-            <div className="input-label-row"><span className="input-label">대차 개수</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.cartQty ?? 0}
-              onChange={e => updateElevatorBasic({ cartQty: e.target.value })} />
-          </div>
-          <div className="input-group">
-            <div className="input-label-row"><span className="input-label">박스 개수</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.boxQty ?? 0}
-              onChange={e => updateElevatorBasic({ boxQty: e.target.value })} />
-          </div>
-          <div className="input-group">
-            <div className="input-label-row"><span className="input-label">파렛트 개수</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.palletQty ?? 0}
-              onChange={e => updateElevatorBasic({ palletQty: e.target.value })} />
-          </div>
-          <div className="input-group">
-            <div className="input-label-row"><span className="input-label">손수레 개수</span></div>
-            <input className="input-field" type="number" min={0} value={basicInfo.handcartQty ?? 0}
-              onChange={e => updateElevatorBasic({ handcartQty: e.target.value })} />
-          </div>
-          <div className="input-group full-width">
-            <div className="input-label-row"><span className="input-label">E/V 부하 가중치 (0~1)</span></div>
-            <select className="input-field" value={basicInfo.weight ?? 0.8}
-              onChange={e => updateElevatorBasic({ weight: parseFloat(e.target.value) })}>
-              {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w.toFixed(1)}</option>)}
-            </select>
-          </div>
           <div className="input-group full-width">
             <PhotoSection title="호기 적재 사진" photos={photos} onAdd={addPhoto} onRemove={removePhoto} />
           </div>
@@ -241,6 +214,13 @@ export default function ElevatorWorkload({
       <div className="section-card">
         <div className="section-title">측정 결과 <span className="sub-title">| 누적 합산 ({measurements.length}회)</span></div>
         <div className="input-grid">
+          <div className="input-group full-width">
+            <div className="input-label-row"><span className="input-label">E/V 부하 가중치 (0~1)</span></div>
+            <select className="input-field" value={basicInfo.weight ?? 0.8}
+              onChange={e => updateElevatorBasic({ weight: parseFloat(e.target.value) })}>
+              {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w.toFixed(1)}</option>)}
+            </select>
+          </div>
           <div className="result-box">
             <span className="result-box__label">총 운반 시간</span>
             <span className="result-box__value">{totalTransportSec.toFixed(1)}초</span>

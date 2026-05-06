@@ -194,7 +194,7 @@ export default function AmrCalculation({ data, updateData }) {
             </span>
           </div>
           <div className="result-box tone-slate full-width">
-            <span className="result-box__label">가동율 적용 = ⌈ 원단위 / 가동율 ⌉</span>
+            <span className="result-box__label">가동율 적용 = ⌈ 원단위 / 가동율 ⌉ (충전, 수리 등 시간)</span>
             <span className="result-box__value">
               {adjustedRaw > 0
                 ? <>{adjustedRaw.toFixed(2)} → <span style={{ color: '#fbbf24' }}>{amrAdjustedUnits}대</span></>

@@ -64,7 +64,7 @@ export const initialState = {
     /* 호기별 결과 비교를 위해 dataByHogi 저장 (key는 string '1'~'9') */
     dataByHogi: {
       '1': {
-        basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+        basicInfo: { weight: 0.8, evWidth: '', evDepth: '' },
         measurements: [createInitialElevatorMeasurement(1)],
         loadItems: [],   // E/V 적재율 계산용 박스/대차 항목
         photos: []
@@ -78,7 +78,15 @@ export const initialState = {
       { no: 1, width: '', height: '', photo: null, items: [] }
     ]
   },
-  inventory: { selfUph: '', dayShiftTime: '', nightShiftTime: '', remainTime: '', ageingQty: '', customerUph: '', customerProdTime: '', distributionRatio: '', depotLoadTime: '', selfToCustomerTime: '', customerDockTime: '', waitTime: '', customerStock: '' },
+  inventory: {
+    /* 자사 기초 재고 */
+    customerDayUph: '', customerDayTime: '', customerNightUph: '', customerNightTime: '',
+    selfDayUph: '', selfDayTime: '', selfNightUph: '', selfNightTime: '',
+    /* 운반 리드타임 */
+    ageingTime: '', safetyStockTime: '', depotLoadTime: '', selfToCustomerTime: '',
+    /* 고객사 운영 재고 */
+    customerDockTime: '', waitTime: '', customerSafetyTime: ''
+  },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
   savedAt: null,
 }
@@ -205,7 +213,7 @@ export function useAppState() {
           dataByHogi: {
             ...s.elevator.dataByHogi,
             [hogiKey]: {
-              basicInfo: { cartQty: 0, boxQty: 0, palletQty: 0, handcartQty: 0, weight: 0.8, evWidth: '', evDepth: '' },
+              basicInfo: { weight: 0.8, evWidth: '', evDepth: '' },
               measurements: [createInitialElevatorMeasurement(1)],
               loadItems: [],
               photos: []

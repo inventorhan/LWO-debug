@@ -145,10 +145,6 @@ export async function exportToExcel(state) {
     ws2.addRows([
       ['E/V 가로(mm)', eb.evWidth],
       ['E/V 세로(mm)', eb.evDepth],
-      ['대차 개수', eb.cartQty],
-      ['박스 개수', eb.boxQty],
-      ['파렛트 개수', eb.palletQty],
-      ['손수레 개수', eb.handcartQty],
       ['E/V 부하 가중치', eb.weight]
     ])
 
@@ -271,43 +267,78 @@ export async function exportToExcel(state) {
   ]
   styleHeaderRow(ws4.getRow(1))
   const inv = state.inventory || {}
-  const dayProd = n(inv.selfUph) * n(inv.dayShiftTime)
-  const nightProd = n(inv.selfUph) * n(inv.nightShiftTime)
-  applySubHeader(ws4.addRow(['생산 라인 (자사)']))
+  const custDayProd   = n(inv.customerDayUph)   * n(inv.customerDayTime)
+  const custNightProd = n(inv.customerNightUph) * n(inv.customerNightTime)
+  const custDailyProd = custDayProd + custNightProd
+  const selfDayProd   = n(inv.selfDayUph)       * n(inv.selfDayTime)
+  const selfNightProd = n(inv.selfNightUph)     * n(inv.selfNightTime)
+  const selfDailyProd = selfDayProd + selfNightProd
+  const shortageQty   = Math.max(0, custDailyProd - selfDailyProd)
+  const refUph = n(inv.customerDayUph)
+
+  applySubHeader(ws4.addRow(['자사 기초 재고 — 고객 라인']))
   ws4.addRows([
-    ['자사 UPH', inv.selfUph],
-    ['주간 생산 시간(시간)', inv.dayShiftTime],
-    ['야간 생산 시간(시간)', inv.nightShiftTime],
-    ['주간 생산량(개)', dayProd.toFixed(0)],
-    ['야간 생산량(개)', nightProd.toFixed(0)],
-    ['일일 생산량(개)', (dayProd + nightProd).toFixed(0)]
+    ['고객 주간 UPH', inv.customerDayUph],
+    ['고객 주간 작업 시간(시간)', inv.customerDayTime],
+    ['고객 야간 UPH', inv.customerNightUph],
+    ['고객 야간 작업 시간(시간)', inv.customerNightTime],
+    ['고객 주간 생산량(대)', custDayProd.toFixed(0)],
+    ['고객 야간 생산량(대)', custNightProd.toFixed(0)],
+    ['고객 일일 생산 수량(대)', custDailyProd.toFixed(0)]
   ])
   ws4.addRow([])
-  applySubHeader(ws4.addRow(['고객 라인']))
+  applySubHeader(ws4.addRow(['자사 기초 재고 — 자사 라인']))
   ws4.addRows([
-    ['고객 UPH', inv.customerUph],
-    ['고객 생산 시간(시간)', inv.customerProdTime],
-    ['물량 배분 비율(%)', inv.distributionRatio]
+    ['자사 주간 UPH', inv.selfDayUph],
+    ['자사 주간 작업 시간(시간)', inv.selfDayTime],
+    ['자사 야간 UPH', inv.selfNightUph],
+    ['자사 야간 작업 시간(시간)', inv.selfNightTime],
+    ['자사 주간 생산량(대)', selfDayProd.toFixed(0)],
+    ['자사 야간 생산량(대)', selfNightProd.toFixed(0)],
+    ['자사 일일 생산 수량(대)', selfDailyProd.toFixed(0)],
+    ['일일 부족 수량 (기초 재고, 대)', shortageQty.toFixed(0)]
   ])
   ws4.addRow([])
-  applySubHeader(ws4.addRow(['리드타임']))
+  applySubHeader(ws4.addRow(['운반 리드타임 → 수량 환산 (고객 UPH 기준)']))
+  const ageingQ = (n(inv.ageingTime)         / 3600) * refUph
+  const safetyQ = (n(inv.safetyStockTime)    / 3600) * refUph
+  const loadQ   = (n(inv.depotLoadTime)      / 3600) * refUph
+  const moveQ   = (n(inv.selfToCustomerTime) / 3600) * refUph
+  const leadTimeStock = ageingQ + safetyQ + loadQ + moveQ
   ws4.addRows([
+    ['숙성 시간(초)', inv.ageingTime],
+    ['숙성 수량(대)', ageingQ.toFixed(0)],
+    ['안심 재고 시간(초, 정책성)', inv.safetyStockTime],
+    ['안심 수량(대)', safetyQ.toFixed(0)],
     ['Depot~상차 시간(초)', inv.depotLoadTime],
+    ['상차 수량(대)', loadQ.toFixed(0)],
     ['자사~고객 이동 시간(초)', inv.selfToCustomerTime],
-    ['고객 Dock~Depot 하차(초)', inv.customerDockTime],
-    ['대기 시간(초)', inv.waitTime],
-    ['고객사 재고 시간(초)', inv.customerStock]
+    ['이동 수량(대)', moveQ.toFixed(0)],
+    ['리드타임 재고(대) = 숙성+안심+상차+이동', leadTimeStock.toFixed(0)]
   ])
   ws4.addRow([])
-  applySubHeader(ws4.addRow(['실제 적정 보관 수량']))
-  const remainQty = n(inv.selfUph) * n(inv.remainTime)
-  const total = remainQty + nightProd + n(inv.ageingQty)
+  applySubHeader(ws4.addRow(['고객사 운영 재고 (고객 UPH 기준)']))
+  const unloadQ = (n(inv.customerDockTime)   / 3600) * refUph
+  const waitQ   = (n(inv.waitTime)           / 3600) * refUph
+  const safeQ   = (n(inv.customerSafetyTime) / 3600) * refUph
+  const opsStock = unloadQ + waitQ + safeQ
   ws4.addRows([
-    ['주간 잔량 시간(시간)', inv.remainTime],
-    ['주간 잔량 수량(개)', remainQty.toFixed(0)],
-    ['야간 생산 수량(개)', nightProd.toFixed(0)],
-    ['숙성 보관 수량(개)', inv.ageingQty],
-    ['Total 최적 보관(개)', total.toFixed(0)]
+    ['고객 Dock~Depot 하차 시간(초)', inv.customerDockTime],
+    ['하차 수량(대)', unloadQ.toFixed(0)],
+    ['대기 시간(초)', inv.waitTime],
+    ['대기 수량(대)', waitQ.toFixed(0)],
+    ['고객사 안전 재고 시간(초)', inv.customerSafetyTime],
+    ['안전 재고 수량(대)', safeQ.toFixed(0)],
+    ['고객사 운영 재고(대) = 하차+대기+안전', opsStock.toFixed(0)]
+  ])
+  ws4.addRow([])
+  applySubHeader(ws4.addRow(['최종 적정 재고']))
+  const finalStock = shortageQty + leadTimeStock + opsStock
+  ws4.addRows([
+    ['① 일일 부족 수량(대)', shortageQty.toFixed(0)],
+    ['② 리드타임 재고(대)', leadTimeStock.toFixed(0)],
+    ['③ 고객사 운영 재고(대)', opsStock.toFixed(0)],
+    ['⭐ Total 최종 적정 재고(대) = ①+②+③', finalStock.toFixed(0)]
   ])
 
   /* ─── 5. AMR 산출 ─── */
