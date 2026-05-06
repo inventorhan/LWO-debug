@@ -13,7 +13,8 @@
     "bump:minor": "node scripts/bump-version.mjs --minor",
     "bump:major": "node scripts/bump-version.mjs --major",
     "release:apk": "npm run build && npx cap copy android && cd android && gradlew assembleRelease",
-    "release:aab": "npm run build && npx cap copy android && cd android && gradlew bundleRelease"
+    "release:aab": "npm run build && npx cap copy android && cd android && gradlew bundleRelease",
+    "deploy:pages": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','docs/index.html'); require('fs').writeFileSync('docs/.nojekyll','')\""
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
