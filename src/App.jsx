@@ -155,7 +155,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <SplashScreen duration={1800} fadeMs={500} />
+      <SplashScreen fadeMs={400} />
       {/* Sidebar (Desktop only) */}
       <aside className="sidebar">
         <div className="sidebar-brand">

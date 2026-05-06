@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import splashImg from '../../assets/splash.jpg'
 
-export default function SplashScreen({ duration = 1800, fadeMs = 500 }) {
+export default function SplashScreen({ fadeMs = 400 }) {
   const [phase, setPhase] = useState('show')
+  const doneTimer = useRef(null)
 
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase('fade'), duration)
-    const t2 = setTimeout(() => setPhase('done'), duration + fadeMs)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [duration, fadeMs])
+  useEffect(() => () => clearTimeout(doneTimer.current), [])
+
+  const dismiss = () => {
+    if (phase !== 'show') return
+    setPhase('fade')
+    doneTimer.current = setTimeout(() => setPhase('done'), fadeMs)
+  }
 
   if (phase === 'done') return null
 
@@ -18,27 +21,45 @@ export default function SplashScreen({ duration = 1800, fadeMs = 500 }) {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: '#000',
+        backgroundImage: `url(${splashImg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#000',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'center',
+        paddingBottom: '12vh',
         opacity: phase === 'fade' ? 0 : 1,
         transition: `opacity ${fadeMs}ms ease`,
         pointerEvents: phase === 'fade' ? 'none' : 'auto'
       }}
     >
-      <img
-        src={splashImg}
-        alt="LWO"
+      <button
+        onClick={dismiss}
         style={{
-          maxWidth: '100%',
-          maxHeight: '100%',
-          objectFit: 'contain',
-          userSelect: 'none',
-          WebkitUserDrag: 'none'
+          padding: '16px 64px',
+          fontSize: '1.2rem',
+          fontWeight: 800,
+          color: 'white',
+          background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)',
+          border: '2px solid rgba(255,255,255,0.6)',
+          borderRadius: 999,
+          boxShadow: '0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(21,101,192,0.25)',
+          cursor: 'pointer',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          animation: 'splashPulse 1.6s ease-in-out infinite'
         }}
-        draggable={false}
-      />
+      >
+        ▶ Start
+      </button>
+      <style>{`
+        @keyframes splashPulse {
+          0%, 100% { transform: scale(1);    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(21,101,192,0.25); }
+          50%      { transform: scale(1.06); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 12px rgba(21,101,192,0.35); }
+        }
+      `}</style>
     </div>
   )
 }
