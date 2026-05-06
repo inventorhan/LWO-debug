@@ -7,6 +7,7 @@ import InventoryStorage from './modules/InventoryStorage'
 import AmrCalculation from './modules/AmrCalculation'
 import { exportToExcel } from './shared/utils/excelExport'
 import { saveJson } from './shared/utils/saveAndShare'
+import SplashScreen from './shared/components/SplashScreen'
 
 const TABS = [
   { id: 'worker',    label: '작업자 부하율', short: '작업자', icon: '👷' },
@@ -154,6 +155,7 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <SplashScreen duration={1800} fadeMs={500} />
       {/* Sidebar (Desktop only) */}
       <aside className="sidebar">
         <div className="sidebar-brand">
