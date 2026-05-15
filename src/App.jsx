@@ -24,7 +24,7 @@ export default function App() {
     addPhoto, removePhoto, addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
     switchPersonnel, addTransportType, updateTransportType, removeTransportType,
-    switchHogi, updateElevatorBasic,
+    switchHogi, removeHogi, updateElevatorBasic,
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
     addElevatorCard, removeElevatorCard,
     addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem
@@ -133,6 +133,7 @@ export default function App() {
         return <ElevatorWorkload
           data={state.elevator}
           switchHogi={switchHogi}
+          removeHogi={removeHogi}
           updateElevatorBasic={updateElevatorBasic}
           addElevatorCycle={addElevatorCycle}
           removeElevatorCycle={removeElevatorCycle}

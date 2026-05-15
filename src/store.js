@@ -254,6 +254,28 @@ export function useAppState() {
     })
   }, [])
 
+  const removeHogi = useCallback((no) => {
+    setState(s => {
+      const key = String(no)
+      const keys = Object.keys(s.elevator.dataByHogi || {})
+      if (keys.length <= 1) return s
+      const nextMap = { ...s.elevator.dataByHogi }
+      delete nextMap[key]
+      const remaining = Object.keys(nextMap).map(k => parseInt(k)).sort((a, b) => a - b)
+      const nextActive = (s.elevator.activeHogi === no)
+        ? (remaining[0] || 1)
+        : s.elevator.activeHogi
+      return {
+        ...s,
+        elevator: {
+          ...s.elevator,
+          activeHogi: nextActive,
+          dataByHogi: nextMap
+        }
+      }
+    })
+  }, [])
+
   const updateElevatorHogi = useCallback((upd) => {
     setState(s => {
       const key = String(s.elevator.activeHogi)
@@ -806,7 +828,7 @@ export function useAppState() {
     switchPersonnel,
     addTransportType, updateTransportType, removeTransportType,
     /* E/V */
-    switchHogi, updateElevatorHogi, updateElevatorBasic,
+    switchHogi, removeHogi, updateElevatorHogi, updateElevatorBasic,
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
     addElevatorCard, removeElevatorCard,
     addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem

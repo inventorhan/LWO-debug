@@ -24,7 +24,7 @@ const ITEM_TYPES = ['박스', '대차', '파렛트', '손수레']
 export default function ElevatorWorkload({
   data,
   /* 호기 단위 액션 */
-  switchHogi, updateElevatorBasic,
+  switchHogi, removeHogi, updateElevatorBasic,
   addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
   addElevatorCard, removeElevatorCard,
   addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem,
@@ -63,6 +63,24 @@ export default function ElevatorWorkload({
       setActiveCycleId(null)
     }
   }, [measurements.length, activeIndex, removeElevatorCycle])
+
+  /* ── 호기 목록 / 추가·삭제 ── */
+  const hogiList = Object.keys(data.dataByHogi || { '1': null })
+    .map(k => parseInt(k))
+    .filter(n => !isNaN(n))
+    .sort((a, b) => a - b)
+
+  const handleAddHogi = useCallback(() => {
+    const next = (hogiList.length === 0 ? 1 : Math.max(...hogiList) + 1)
+    switchHogi(next)
+  }, [hogiList, switchHogi])
+
+  const handleRemoveHogi = useCallback(() => {
+    if (hogiList.length <= 1) return
+    if (window.confirm(`${activeHogi}호기의 모든 기초 정보·측정·적재 데이터가 삭제됩니다. 계속하시겠습니까?`)) {
+      removeHogi(activeHogi)
+    }
+  }, [hogiList.length, activeHogi, removeHogi])
 
   /* ── 합산 계산 ── */
   const totalTransportSec = measurements.reduce((sum, m) =>
@@ -113,16 +131,40 @@ export default function ElevatorWorkload({
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <div className="module-title">Elevator 부하율 산출</div>
 
-      {/* 호기 선택 탭 */}
+      {/* 호기 선택 탭 (회차와 동일한 UI: 추가/삭제 가능) */}
       <div className="section-card">
-        <div className="section-title">호기 선택</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <div className="section-title" style={{ marginBottom: 0, border: 'none', paddingBottom: 0 }}>
+            호기 선택 <span className="sub-title">| {hogiList.length}대 중 {activeHogi}호기</span>
+            <HelpHint title="호기 선택">
+              <p>측정할 엘리베이터 호기를 선택·추가·삭제합니다.</p>
+              <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+                <li>기본 1호기로 시작 — <b>+</b> 버튼으로 호기 추가</li>
+                <li>호기별로 기초 정보 / 적재 / 측정 데이터가 독립적으로 저장됩니다</li>
+                <li>2대 이상일 때 우측 <b>🗑️ 호기삭제</b>로 현재 선택된 호기 제거</li>
+              </ul>
+              <HintNote type="warn">호기 삭제 시 해당 호기의 모든 측정·적재 데이터가 함께 삭제됩니다.</HintNote>
+            </HelpHint>
+          </div>
+          {hogiList.length > 1 && (
+            <button className="btn" onClick={handleRemoveHogi}
+              style={{ height: 32, padding: '0 12px', background: '#FEF3C7', color: '#B45309', fontSize: '0.78rem' }}>
+              🗑️ 호기삭제
+            </button>
+          )}
+        </div>
+
         <div className="cycle-tabs-container">
-          {Array.from({ length: 9 }, (_, i) => i + 1).map(h => (
+          {hogiList.map(h => (
             <button key={h} onClick={() => switchHogi(h)}
               className={`cycle-tab-btn ${activeHogi === h ? 'active' : ''}`}
               style={{ padding: '0 12px', minWidth: 'auto', height: 38, fontSize: '0.85rem' }}
+              title={`${h}호기`}
             >{h}호기</button>
           ))}
+          <button onClick={handleAddHogi} className="cycle-tab-btn"
+            style={{ padding: '0 12px', minWidth: 'auto', height: 38, fontSize: '0.85rem', background: '#FDF2F4', color: '#A50034', borderColor: '#E8C5CC' }}
+            title="호기 추가">+ 호기</button>
         </div>
       </div>
 
