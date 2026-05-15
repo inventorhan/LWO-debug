@@ -71,7 +71,10 @@ export default function ElevatorWorkload({
     .sort((a, b) => a - b)
 
   const handleAddHogi = useCallback(() => {
-    const next = (hogiList.length === 0 ? 1 : Math.max(...hogiList) + 1)
+    /* 빈 번호 자동 채움: [1,2,3,5] → 4를 먼저 사용 */
+    const used = new Set(hogiList)
+    let next = 1
+    while (used.has(next)) next++
     switchHogi(next)
   }, [hogiList, switchHogi])
 
@@ -139,7 +142,8 @@ export default function ElevatorWorkload({
             <HelpHint title="호기 선택">
               <p>측정할 엘리베이터 호기를 선택·추가·삭제합니다.</p>
               <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
-                <li>기본 1호기로 시작 — <b>+</b> 버튼으로 호기 추가</li>
+                <li>기본 1호기로 시작 — <b>+ 호기</b> 버튼으로 추가</li>
+                <li>번호는 <b>가장 작은 빈 번호부터 자동 채움</b> — [1,2,3,5]에서 추가하면 4호기 생성</li>
                 <li>호기별로 기초 정보 / 적재 / 측정 데이터가 독립적으로 저장됩니다</li>
                 <li>2대 이상일 때 우측 <b>🗑️ 호기삭제</b>로 현재 선택된 호기 제거</li>
               </ul>
