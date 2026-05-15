@@ -264,7 +264,7 @@ export default function WorkerWorkload({
             <span className="result-box__label">부하 가중 시간 = 3600 × {weight}</span>
             <span className="result-box__value">{weightedTime.toFixed(0)} 초</span>
           </div>
-          <div className="result-box" style={{ background: workloadRate > 90 ? '#991b1b' : workloadRate > 70 ? '#b91c1c' : '#0f766e' }}>
+          <div className="result-box" style={{ background: workloadRate > 90 ? '#92400E' : workloadRate > 70 ? '#B45309' : '#047857' }}>
             <span className="result-box__label">물류 부하율</span>
             <span className="result-box__value">{workloadRate.toFixed(1)}%</span>
           </div>
@@ -279,7 +279,7 @@ export default function WorkerWorkload({
           </div>
           {measurements.length > 1 && (
             <button className="btn" onClick={() => handleDeleteCycle(activeCycleId)}
-              style={{ height: 32, padding: '0 12px', background: '#fee2e2', color: '#b91c1c', fontSize: '0.78rem' }}>
+              style={{ height: 32, padding: '0 12px', background: '#FEF3C7', color: '#B45309', fontSize: '0.78rem' }}>
               🗑️ 회차삭제
             </button>
           )}
@@ -367,26 +367,26 @@ export default function WorkerWorkload({
             {Object.entries({ '피킹': COLORS.pick, '이동': COLORS.move, '로딩/언로딩': COLORS.load, '회수': COLORS.recovery }).map(([label, color]) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 12, height: 12, background: color, borderRadius: 2 }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>{label}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#7C6E74' }}>{label}</span>
               </div>
             ))}
           </div>
 
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 작업 시간 {chartMode === 'avg' ? '평균' : '누적'} (초)</div>
-            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
+            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
               {workerStats.map((w, i) => {
                 const heightPct = maxT > 0 ? Math.max(2, (w.totalT / maxT) * 100) : 2
                 return (
                   <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#1e293b' }}>{w.totalT.toFixed(0)}s</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#f1f5f9' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#2A1F24' }}>{w.totalT.toFixed(0)}s</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1' }}>
                       {renderSegment(w.details.pickT, w.totalT, COLORS.pick, '피킹')}
                       {renderSegment(w.details.moveT, w.totalT, COLORS.move, '이동')}
                       {renderSegment(w.details.loadT, w.totalT, COLORS.load, '로딩')}
                       {renderSegment(w.details.recoverT, w.totalT, COLORS.recovery, '회수')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}
@@ -395,17 +395,17 @@ export default function WorkerWorkload({
 
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 총 이동 거리 {chartMode === 'avg' ? '평균' : '누적'} (m)</div>
-            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
+            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
               {workerStats.map((w, i) => {
                 const heightPct = maxDist > 0 ? Math.max(2, (w.dist / maxDist) * 100) : 2
                 return (
                   <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: COLORS.move }}>{w.dist.toFixed(0)}m</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#f1f5f9' }}>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1' }}>
                       {renderSegment(w.details.moveDist, w.dist, COLORS.move, '이동', 'm')}
                       {renderSegment(w.details.recoverDist, w.dist, COLORS.recovery, '회수', 'm')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}
@@ -414,20 +414,20 @@ export default function WorkerWorkload({
 
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 업무 부하율 (%)</div>
-            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
+            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
               {workerStats.map((w, i) => {
                 const heightPct = maxWl > 0 ? Math.max(2, (w.wlRate / maxWl) * 100) : 2
                 const totalColor = w.wlRate > 90 ? COLORS.recovery : w.wlRate > 70 ? COLORS.load : COLORS.move
                 return (
                   <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: totalColor }}>{w.wlRate.toFixed(0)}%</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', border: `1px solid ${totalColor}33`, background: '#f1f5f9' }}>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', border: `1px solid ${totalColor}33`, background: '#F4EFF1' }}>
                       {renderSegment(w.details.pickRate, w.wlRate, COLORS.pick, '피킹', '%')}
                       {renderSegment(w.details.moveRate, w.wlRate, COLORS.move, '이동', '%')}
                       {renderSegment(w.details.loadRate, w.wlRate, COLORS.load, '로딩', '%')}
                       {renderSegment(w.details.recoverRate, w.wlRate, COLORS.recovery, '회수', '%')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}
@@ -435,9 +435,9 @@ export default function WorkerWorkload({
           </div>
 
           {teamTotal.totalT > 0 && (
-            <div className="section-card" style={{ background: '#1e293b', color: 'white' }}>
-              <div className="section-title" style={{ color: 'white', borderBottomColor: '#334155' }}>창고 전체 작업 시간 분포 (팀 총합)</div>
-              <div style={{ height: 44, width: '100%', display: 'flex', borderRadius: 8, overflow: 'hidden', margin: '12px 0 8px', border: '1px solid #475569' }}>
+            <div className="section-card" style={{ background: '#2A1F24', color: 'white' }}>
+              <div className="section-title" style={{ color: 'white', borderBottomColor: '#3A2F33' }}>창고 전체 작업 시간 분포 (팀 총합)</div>
+              <div style={{ height: 44, width: '100%', display: 'flex', borderRadius: 8, overflow: 'hidden', margin: '12px 0 8px', border: '1px solid #4A4045' }}>
                 {renderHorizontalSegment(teamTotal.pickT, teamTotal.totalT, COLORS.pick, '피킹', 's')}
                 {renderHorizontalSegment(teamTotal.moveT, teamTotal.totalT, COLORS.move, '이동', 's')}
                 {renderHorizontalSegment(teamTotal.loadT, teamTotal.totalT, COLORS.load, '로딩', 's')}
@@ -459,7 +459,7 @@ export default function WorkerWorkload({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
               <span className="section-title" style={{ marginBottom: 0, border: 'none', padding: 0 }}>👥 물류 인원 명단 관리</span>
               <button onClick={() => { setIsManagerOpen(false); setEditingName(null) }}
-                style={{ border: 'none', background: 'none', fontSize: '1.5rem', color: '#94a3b8', cursor: 'pointer' }}>✕</button>
+                style={{ border: 'none', background: 'none', fontSize: '1.5rem', color: '#9C8E94', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <input className="input-field" placeholder="새 이름" value={newPersonName}
@@ -472,7 +472,7 @@ export default function WorkerWorkload({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {personnelList?.length === 0 && (
-                <div style={{ textAlign: 'center', color: '#94a3b8', padding: 16 }}>등록된 인원이 없습니다.</div>
+                <div style={{ textAlign: 'center', color: '#9C8E94', padding: 16 }}>등록된 인원이 없습니다.</div>
               )}
               {personnelList?.map(name => (
                 <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
@@ -491,7 +491,7 @@ export default function WorkerWorkload({
                       <span style={{ fontWeight: 500 }}>{name}</span>
                       <div style={{ display: 'flex', gap: 12 }}>
                         <button onClick={() => { setEditingName(name); setEditValue(name) }}
-                          style={{ border: 'none', background: 'none', color: '#3b82f6', fontSize: '1.1rem', cursor: 'pointer' }}>✏️</button>
+                          style={{ border: 'none', background: 'none', color: '#A50034', fontSize: '1.1rem', cursor: 'pointer' }}>✏️</button>
                         <button onClick={() => { if (window.confirm(`${name}님을 삭제하시겠습니까? 측정 데이터도 함께 삭제됩니다.`)) removePersonnel(name) }}
                           style={{ border: 'none', background: 'none', color: '#ef4444', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
                       </div>
@@ -500,7 +500,7 @@ export default function WorkerWorkload({
                 </div>
               ))}
             </div>
-            <button className="btn" style={{ width: '100%', marginTop: 20, background: '#f1f5f9', color: '#475569' }}
+            <button className="btn" style={{ width: '100%', marginTop: 20, background: '#F4EFF1', color: '#4A4045' }}
               onClick={() => { setIsManagerOpen(false); setEditingName(null) }}>닫기</button>
           </div>
         </div>
@@ -513,7 +513,7 @@ export default function WorkerWorkload({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
               <span className="section-title" style={{ marginBottom: 0, border: 'none', padding: 0 }}>🚚 운반 종류 관리</span>
               <button onClick={() => { setIsTransportManagerOpen(false); setEditingTransportId(null) }}
-                style={{ border: 'none', background: 'none', fontSize: '1.5rem', color: '#94a3b8', cursor: 'pointer' }}>✕</button>
+                style={{ border: 'none', background: 'none', fontSize: '1.5rem', color: '#9C8E94', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
               <input className="input-field" placeholder="종류 이름 (예: 지게차)" value={newTransportLabel}
@@ -550,11 +550,11 @@ export default function WorkerWorkload({
                     <>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t.label}</span>
-                        <span style={{ fontSize: '0.78rem', color: '#3b82f6' }}>{t.speed} m/s</span>
+                        <span style={{ fontSize: '0.78rem', color: '#A50034' }}>{t.speed} m/s</span>
                       </div>
                       <div style={{ display: 'flex', gap: 12 }}>
                         <button onClick={() => { setEditingTransportId(id); setEditTransportLabel(t.label); setEditTransportSpeed(t.speed) }}
-                          style={{ border: 'none', background: 'none', color: '#3b82f6', fontSize: '1.1rem', cursor: 'pointer' }}>✏️</button>
+                          style={{ border: 'none', background: 'none', color: '#A50034', fontSize: '1.1rem', cursor: 'pointer' }}>✏️</button>
                         <button onClick={() => { if (window.confirm(`${t.label}을(를) 삭제하시겠습니까?`)) removeTransportType(id) }}
                           style={{ border: 'none', background: 'none', color: '#ef4444', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
                       </div>
@@ -563,7 +563,7 @@ export default function WorkerWorkload({
                 </div>
               ))}
             </div>
-            <button className="btn" style={{ width: '100%', marginTop: 20, background: '#f1f5f9', color: '#475569' }}
+            <button className="btn" style={{ width: '100%', marginTop: 20, background: '#F4EFF1', color: '#4A4045' }}
               onClick={() => { setIsTransportManagerOpen(false); setEditingTransportId(null) }}>닫기</button>
           </div>
         </div>

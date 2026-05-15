@@ -157,7 +157,7 @@ export default function ElevatorWorkload({
             <span className="result-box__label">실제 사용 적재 면적</span>
             <span className="result-box__value">{usedAreaM2 > 0 ? `${usedAreaM2.toFixed(1)} m²` : '—'}</span>
           </div>
-          <div className="result-box full-width" style={{ background: '#0f766e' }}>
+          <div className="result-box full-width" style={{ background: '#047857' }}>
             <span className="result-box__label">E/V 적재율 = 실적재 / E/V 면적 × 0.9</span>
             <span className="result-box__value">{loadingRate !== null ? `${loadingRate.toFixed(1)}%` : '—'}</span>
           </div>
@@ -167,16 +167,16 @@ export default function ElevatorWorkload({
         <div style={{ height: 1, background: 'var(--color-card-border)', margin: '14px 0' }} />
         <div className="section-title" style={{ marginBottom: 8 }}>실 적재 항목 입력</div>
         {loadItems.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 12, color: '#64748b', fontSize: '0.85rem' }}>
+          <div style={{ textAlign: 'center', padding: 12, color: '#7C6E74', fontSize: '0.85rem' }}>
             아래 버튼으로 박스 / 대차 / 파렛트 항목을 추가해 주세요.
           </div>
         )}
         {loadItems.map((it, idx) => (
           <div key={it.id} className="section-card" style={{ background: 'white', margin: '0 0 10px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>적재 #{idx + 1}</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2A1F24' }}>적재 #{idx + 1}</span>
               <button onClick={() => removeElevatorLoadItem(it.id)}
-                style={{ border: 'none', background: 'none', color: '#94a3b8', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
+                style={{ border: 'none', background: 'none', color: '#9C8E94', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
             </div>
             <div className="input-grid">
               <div className="input-group">
@@ -231,7 +231,7 @@ export default function ElevatorWorkload({
             <span className="result-box__label">부하 가중 시간 = 3600 × {weight}</span>
             <span className="result-box__value">{weightedTime.toFixed(0)}초</span>
           </div>
-          <div className="result-box" style={{ background: workloadRate > 90 ? '#991b1b' : workloadRate > 70 ? '#b91c1c' : '#0f766e' }}>
+          <div className="result-box" style={{ background: workloadRate > 90 ? '#92400E' : workloadRate > 70 ? '#B45309' : '#047857' }}>
             <span className="result-box__label">E/V 부하율</span>
             <span className="result-box__value">{workloadRate.toFixed(1)}%</span>
           </div>
@@ -246,7 +246,7 @@ export default function ElevatorWorkload({
           </div>
           {measurements.length > 1 && (
             <button className="btn" onClick={() => handleDeleteCycle(effectiveCycleId)}
-              style={{ height: 32, padding: '0 12px', background: '#fee2e2', color: '#b91c1c', fontSize: '0.78rem' }}>
+              style={{ height: 32, padding: '0 12px', background: '#FEF3C7', color: '#B45309', fontSize: '0.78rem' }}>
               🗑️ 회차삭제
             </button>
           )}
@@ -326,26 +326,26 @@ export default function ElevatorWorkload({
             {Object.entries({ '로딩': COLORS.load, '이동': COLORS.move, '언로딩': COLORS.unload, '회수': COLORS.recovery }).map(([label, color]) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 12, height: 12, background: color, borderRadius: 2 }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>{label}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#7C6E74' }}>{label}</span>
               </div>
             ))}
           </div>
 
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">호기별 작업 시간 (초)</div>
-            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #cbd5e1' }}>
+            <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
               {hogiStats.map(h => {
                 const heightPct = maxT > 0 ? Math.max(2, (h.totalT / maxT) * 100) : 2
                 return (
                   <div key={h.hogi} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#1e293b' }}>{h.totalT.toFixed(0)}s</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#f1f5f9' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#2A1F24' }}>{h.totalT.toFixed(0)}s</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1' }}>
                       {renderSeg(h.loadT, h.totalT, COLORS.load)}
                       {renderSeg(h.moveT2, h.totalT, COLORS.move)}
                       {renderSeg(h.unloadT, h.totalT, COLORS.unload)}
                       {renderSeg(h.recoverT, h.totalT, COLORS.recovery)}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textAlign: 'center', width: '100%' }}>{h.hogi}호기</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%' }}>{h.hogi}호기</div>
                   </div>
                 )
               })}
@@ -356,11 +356,11 @@ export default function ElevatorWorkload({
             <div className="section-title">호기별 부하율 (%)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {hogiStats.map(h => {
-                const wlColor = h.wlRate > 90 ? '#b91c1c' : h.wlRate > 70 ? '#ea580c' : '#0f766e'
+                const wlColor = h.wlRate > 90 ? '#B45309' : h.wlRate > 70 ? '#ea580c' : '#047857'
                 return (
                   <div key={h.hogi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 60, fontSize: '0.78rem', fontWeight: 700, color: '#475569' }}>{h.hogi}호기</span>
-                    <div style={{ flex: 1, height: 22, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                    <span style={{ width: 60, fontSize: '0.78rem', fontWeight: 700, color: '#4A4045' }}>{h.hogi}호기</span>
+                    <div style={{ flex: 1, height: 22, background: '#F4EFF1', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ width: `${Math.min(100, h.wlRate)}%`, height: '100%', background: wlColor, transition: 'width .3s' }} />
                     </div>
                     <span style={{ width: 56, fontSize: '0.82rem', fontWeight: 800, color: wlColor, textAlign: 'right' }}>{h.wlRate.toFixed(1)}%</span>

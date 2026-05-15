@@ -27,14 +27,14 @@ export default function TimerSection({ title, start, end, onStart, onEnd, onDele
             position: 'absolute', top: '10px', right: '10px',
             width: 28, height: 28, padding: 0,
             background: 'transparent', border: 'none',
-            fontSize: '1.1rem', color: '#94a3b8', cursor: 'pointer', zIndex: 10
+            fontSize: '1.1rem', color: '#9C8E94', cursor: 'pointer', zIndex: 10
           }}
           title="삭제"
         >🗑️</button>
       )}
 
       <div style={{
-        fontSize: '0.92rem', fontWeight: 700, color: '#1e293b',
+        fontSize: '0.92rem', fontWeight: 700, color: '#2A1F24',
         marginBottom: 12, paddingRight: onDelete ? 32 : 0
       }}>{title}</div>
 
@@ -46,7 +46,7 @@ export default function TimerSection({ title, start, end, onStart, onEnd, onDele
           <button
             type="button"
             className="btn btn-time"
-            style={{ backgroundColor: isRunning ? '#16a34a' : '#475569' }}
+            style={{ backgroundColor: isRunning ? '#16a34a' : '#4A4045' }}
             onClick={onStart}
           >
             {start ? fmtTime(start) : '▶ Start'}
@@ -57,7 +57,7 @@ export default function TimerSection({ title, start, end, onStart, onEnd, onDele
           <button
             type="button"
             className="btn btn-time"
-            style={{ backgroundColor: end ? '#0f172a' : '#dc2626' }}
+            style={{ backgroundColor: end ? '#1F1218' : '#dc2626' }}
             onClick={onEnd}
             disabled={!start}
           >

@@ -29,8 +29,8 @@ export default function PhotoSection({ title, photos, onAdd, onRemove }) {
         ))}
         <label className="btn" style={{
           width: 80, height: 80, flexShrink: 0,
-          background: '#f1f5f9', border: '1.5px dashed #cbd5e1',
-          color: '#64748b', flexDirection: 'column',
+          background: '#F4EFF1', border: '1.5px dashed #D4C8CD',
+          color: '#7C6E74', flexDirection: 'column',
           fontSize: '0.72rem', gap: 4, padding: 0, cursor: 'pointer'
         }}>
           <span style={{ fontSize: '1.4rem' }}>📷</span>

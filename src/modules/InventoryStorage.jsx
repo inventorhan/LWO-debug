@@ -98,7 +98,7 @@ export default function InventoryStorage({ data, updateData }) {
             <span className="result-box__label">고객 야간 생산량 = UPH × 시간</span>
             <span className="result-box__value">{fmtN(custNightProd, '대', 0)}</span>
           </div>
-          <div className="result-box tone-dark full-width" style={{ background: '#b91c1c' }}>
+          <div className="result-box tone-dark full-width" style={{ background: '#B45309' }}>
             <span className="result-box__label">고객 일일 생산 수량</span>
             <span className="result-box__value">{fmtN(custDailyProd, '대', 0)}</span>
           </div>
@@ -136,7 +136,7 @@ export default function InventoryStorage({ data, updateData }) {
             <span className="result-box__label">자사 야간 생산량 = UPH × 시간</span>
             <span className="result-box__value">{fmtN(selfNightProd, '대', 0)}</span>
           </div>
-          <div className="result-box tone-dark full-width" style={{ background: '#0f766e' }}>
+          <div className="result-box tone-dark full-width" style={{ background: '#047857' }}>
             <span className="result-box__label">자사 일일 생산 수량</span>
             <span className="result-box__value">{fmtN(selfDailyProd, '대', 0)}</span>
           </div>
@@ -144,7 +144,7 @@ export default function InventoryStorage({ data, updateData }) {
 
         <Divider label="기초 재고 산출" />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#0f766e' : '#A50034', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#047857' : '#A50034', padding: '14px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
               일일 부족 수량 (기초 재고) = 고객 일일 − 자사 일일
               {shortageQty < 0 && ' · 잉여(자사 초과)'}
@@ -173,7 +173,7 @@ export default function InventoryStorage({ data, updateData }) {
         ))}
         <Divider label="합계" />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: '#0f766e', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: '#047857', padding: '14px 16px' }}>
             <span className="result-box__label">리드타임 재고 = 숙성 + 안심 + 상차 + 이동</span>
             <span className="result-box__value" style={{ fontSize: '1.4rem' }}>{fmtN(leadTimeStock, '대', 0)}</span>
           </div>
@@ -199,7 +199,7 @@ export default function InventoryStorage({ data, updateData }) {
         ))}
         <Divider label="합계" />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: '#0f766e', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: '#047857', padding: '14px 16px' }}>
             <span className="result-box__label">고객사 운영 재고 = 하차 + 대기 + 안전 재고</span>
             <span className="result-box__value" style={{ fontSize: '1.4rem' }}>{fmtN(customerOpsStock, '대', 0)}</span>
           </div>
@@ -230,7 +230,7 @@ export default function InventoryStorage({ data, updateData }) {
           </div>
         </div>
 
-        <div style={{ marginTop: 12, padding: 12, background: '#f8fafc', borderRadius: 8, fontSize: '0.78rem', color: '#475569', lineHeight: 1.7 }}>
+        <div style={{ marginTop: 12, padding: 12, background: '#f8fafc', borderRadius: 8, fontSize: '0.78rem', color: '#4A4045', lineHeight: 1.7 }}>
           <div><strong>① Total 최종 적재 재고</strong> = 일일 부족 수량 + 리드타임 재고 + 고객사 운영 재고</div>
           <div><strong>② 안심 재고</strong> : 운반 사고, 설비 고장 빈도수, 차량 수배 등등</div>
           <div><strong>③ 대기 시간</strong> : 고객사 조립 라인 투입 전 보관 수량</div>

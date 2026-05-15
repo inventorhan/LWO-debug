@@ -2,27 +2,36 @@
 
 /* ===== CSS Variables ===== */
 :root {
-  /* LG Active Red 브랜드 컬러 */
+  /* LG Active Red 브랜드 컬러 + 따뜻한 중성 톤 */
   --color-primary: #A50034;
-  --color-primary-light: #C8113F;
-  --color-primary-dark: #7A0026;
+  --color-primary-light: #C2185B;
+  --color-primary-dark: #6F0023;
+  --color-primary-soft: #F4E1E7;     /* 라이트 톤 액션 버튼 배경 */
+  --color-primary-softer: #FAEFF2;   /* 호버/카드 배경 */
 
-  --color-accent: #424242;
-  --color-accent-light: #6B6B6B;
-  --color-accent-dark: #212121;
+  --color-accent: #4A4045;            /* 따뜻한 다크 그레이 */
+  --color-accent-light: #6D636A;
+  --color-accent-dark: #2A1F24;
 
-  --color-card-bg: #FDF5F7;
-  --color-card-border: #E8C5CC;
-  --color-card-section: #F3D6DC;
+  --color-card-bg: #FBF8F9;           /* 따뜻한 오프화이트 */
+  --color-card-border: #E5DCDF;
+  --color-card-section: #EFE5E8;
 
-  --color-bg: #F0F4F8;
+  --color-bg: #F6F3F4;
   --color-surface: #FFFFFF;
-  --color-surface-2: #F1F5F9;
+  --color-surface-2: #F4EFF1;
 
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748B;
+  --color-text-primary: #1F1218;
+  --color-text-secondary: #44383E;
+  --color-text-muted: #7C6E74;
   --color-text-white: #FFFFFF;
+
+  /* 상태 컬러 — LG 레드와 명확히 구분되는 호환 톤 */
+  --color-success: #047857;
+  --color-success-light: #D1FAE5;
+  --color-warning: #B45309;
+  --color-warning-light: #FEF3C7;
+  --color-info: #1E40AF;
 
   --border-radius-sm: 6px;
   --border-radius-md: 10px;
@@ -463,7 +472,7 @@ select.input-field {
   bottom: calc(var(--bottomnav-h) + 16px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1e293b;
+  background: var(--color-accent-dark);
   color: white;
   padding: 10px 20px;
   border-radius: 22px;
@@ -652,17 +661,17 @@ select.input-field {
 }
 
 /* ===== Tone-down result-box for sub fields ===== */
-.result-box.tone-dark { background: #1e293b; }
+.result-box.tone-dark { background: var(--color-accent-dark); }
 .result-box.tone-blue { background: var(--color-primary); }
-.result-box.tone-slate { background: #475569; }
-.result-box.tone-success { background: #047857; }
+.result-box.tone-slate { background: var(--color-accent); }
+.result-box.tone-success { background: var(--color-success); }
 
 /* ===== 재고 모듈 전용 ===== */
 .inv-section-label {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #475569;
-  background: #f1f5f9;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-softer);
   padding: 6px 12px;
   border-radius: 6px;
   margin: 4px 0 12px;

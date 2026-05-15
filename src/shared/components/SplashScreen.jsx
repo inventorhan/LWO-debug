@@ -55,7 +55,7 @@ export default function SplashScreen({ fadeMs = 400 }) {
           fontSize: '1.1rem',
           fontWeight: 800,
           color: 'white',
-          background: 'linear-gradient(135deg, #C8113F 0%, #7A0026 100%)',
+          background: 'linear-gradient(135deg, #C2185B 0%, #6F0023 100%)',
           border: '2px solid rgba(255,255,255,0.6)',
           borderRadius: 999,
           boxShadow: '0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(165,0,52,0.25)',

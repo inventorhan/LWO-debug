@@ -98,9 +98,9 @@ export default function AreaEfficiency({ data, updateData }) {
   const PhotoButton = ({ photo, onChange, label = '사진 촬영' }) => (
     <label className="btn" style={{
       minHeight: 44, padding: 6,
-      background: photo ? '#fff' : '#f1f5f9',
-      border: '1.5px dashed #cbd5e1',
-      color: '#64748b', fontSize: '0.78rem', gap: 6, cursor: 'pointer'
+      background: photo ? '#fff' : '#F4EFF1',
+      border: '1.5px dashed #D4C8CD',
+      color: '#7C6E74', fontSize: '0.78rem', gap: 6, cursor: 'pointer'
     }}>
       {photo ? (
         <img src={photo} alt="" style={{ height: 30, width: 30, objectFit: 'cover', borderRadius: 4 }} />
@@ -141,7 +141,7 @@ export default function AreaEfficiency({ data, updateData }) {
             <span className="input-label">공장 사진</span>
             <label className="btn" style={{
               minHeight: factory.photo ? 'auto' : 80, padding: factory.photo ? 4 : 12,
-              background: '#f1f5f9', border: '1.5px dashed #cbd5e1', color: '#64748b',
+              background: '#F4EFF1', border: '1.5px dashed #D4C8CD', color: '#7C6E74',
               flexDirection: 'column', fontSize: '0.85rem', gap: 4, cursor: 'pointer'
             }}>
               {factory.photo
@@ -151,7 +151,7 @@ export default function AreaEfficiency({ data, updateData }) {
                 onChange={e => { if (e.target.files[0]) handlePhoto('factory', null, null, e.target.files[0]) }} />
             </label>
             {factory.photo && (
-              <button className="btn" style={{ marginTop: 6, background: '#fee2e2', color: '#b91c1c', height: 32, fontSize: '0.78rem' }}
+              <button className="btn" style={{ marginTop: 6, background: '#FEF3C7', color: '#B45309', height: 32, fontSize: '0.78rem' }}
                 onClick={() => setFactory({ photo: null })}>사진 제거</button>
             )}
           </div>
@@ -164,7 +164,7 @@ export default function AreaEfficiency({ data, updateData }) {
           <span className="section-title" style={{ marginBottom: 0, border: 'none', padding: 0 }}>구역 면적 입력</span>
           {zones.length > 1 && curZone && (
             <button className="btn" onClick={() => removeZone(safeActiveZone)}
-              style={{ height: 30, padding: '0 10px', background: '#fee2e2', color: '#b91c1c', fontSize: '0.75rem' }}>
+              style={{ height: 30, padding: '0 10px', background: '#FEF3C7', color: '#B45309', fontSize: '0.75rem' }}>
               🗑️ {safeActiveZone + 1}구역 삭제
             </button>
           )}
@@ -217,7 +217,7 @@ export default function AreaEfficiency({ data, updateData }) {
             <div className="section-title">실사용 적재 면적 분석</div>
 
             {curZone.items.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: '0.85rem' }}>
+              <div style={{ textAlign: 'center', padding: 16, color: '#7C6E74', fontSize: '0.85rem' }}>
                 아래 버튼으로 적재 항목을 추가해 주세요.
               </div>
             )}
@@ -231,9 +231,9 @@ export default function AreaEfficiency({ data, updateData }) {
               return (
                 <div key={iIdx} className="section-card" style={{ background: '#ffffff', margin: '0 0 12px 0', position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>적재 #{iIdx + 1}</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2A1F24' }}>적재 #{iIdx + 1}</span>
                     <button onClick={() => { if (window.confirm('이 적재 항목을 삭제하시겠습니까?')) removeItem(safeActiveZone, iIdx) }}
-                      style={{ border: 'none', background: 'none', color: '#94a3b8', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
+                      style={{ border: 'none', background: 'none', color: '#9C8E94', fontSize: '1.1rem', cursor: 'pointer' }}>🗑️</button>
                   </div>
                   <div className="input-grid">
                     <div className="input-group">
@@ -332,29 +332,29 @@ export default function AreaEfficiency({ data, updateData }) {
         })
         const maxEff = Math.max(1, ...zoneStats.map(z => z.eff || 0))
         return (
-          <div className="section-card" style={{ background: '#1e293b', borderColor: '#334155', color: 'white' }}>
-            <div className="section-title" style={{ color: 'white', borderBottomColor: '#475569' }}>📊 구역별 면적 효율 분석</div>
+          <div className="section-card" style={{ background: '#2A1F24', borderColor: '#3A2F33', color: 'white' }}>
+            <div className="section-title" style={{ color: 'white', borderBottomColor: '#4A4045' }}>📊 구역별 면적 효율 분석</div>
 
             {/* 그래프 */}
             {zoneStats.some(z => z.eff !== null) && (
-              <div style={{ display: 'flex', height: 200, gap: 8, alignItems: 'flex-end', margin: '32px 0 28px 0', borderBottom: '1px dashed #475569', padding: '0 4px' }}>
+              <div style={{ display: 'flex', height: 200, gap: 8, alignItems: 'flex-end', margin: '32px 0 28px 0', borderBottom: '1px dashed #4A4045', padding: '0 4px' }}>
                 {zoneStats.map(z => {
                   const heightPct = z.eff !== null ? Math.max(2, (z.eff / maxEff) * 100) : 2
-                  const color = z.eff === null ? '#475569' : z.eff > 90 ? '#dc2626' : z.eff > 50 ? '#0ea5e9' : '#0891b2'
+                  const color = z.eff === null ? '#4A4045' : z.eff > 90 ? '#dc2626' : z.eff > 50 ? '#0ea5e9' : '#0891b2'
                   return (
                     <div key={z.idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative', minWidth: 0 }}>
                       <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                         <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 4 }}>
                           {z.eff !== null ? `${z.eff.toFixed(0)}%` : '—'}
                         </div>
-                        <div style={{ fontSize: '0.65rem', color: '#94a3b8', textAlign: 'center', marginBottom: 4 }}>
+                        <div style={{ fontSize: '0.65rem', color: '#9C8E94', textAlign: 'center', marginBottom: 4 }}>
                           {z.ia > 0 ? `(${z.ia.toFixed(0)}m²)` : ''}
                         </div>
                         <div style={{ width: '100%', maxWidth: 56, margin: '0 auto', height: `${heightPct}%`, background: color, borderRadius: '4px 4px 0 0', minHeight: 4, transition: 'height .3s' }} />
                       </div>
-                      <div style={{ position: 'absolute', bottom: -22, fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 700, textAlign: 'center', width: '100%' }}>
+                      <div style={{ position: 'absolute', bottom: -22, fontSize: '0.72rem', color: '#D4C8CD', fontWeight: 700, textAlign: 'center', width: '100%' }}>
                         {z.idx + 1}구역
-                        {z.za > 0 && <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 500 }}>({z.za.toFixed(0)}m²)</div>}
+                        {z.za > 0 && <div style={{ fontSize: '0.62rem', color: '#9C8E94', fontWeight: 500 }}>({z.za.toFixed(0)}m²)</div>}
                       </div>
                     </div>
                   )
@@ -365,13 +365,13 @@ export default function AreaEfficiency({ data, updateData }) {
             {/* 카드 형태 요약 — 실제 면적 표시 */}
             <div className="input-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
               {zoneStats.map(z => (
-                <div key={z.idx} className="result-box" style={{ background: '#334155', alignItems: 'center', padding: 12, textAlign: 'center' }}>
-                  <span className="result-box__label" style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>{z.idx + 1}구역</span>
+                <div key={z.idx} className="result-box" style={{ background: '#3A2F33', alignItems: 'center', padding: 12, textAlign: 'center' }}>
+                  <span className="result-box__label" style={{ fontSize: '0.78rem', color: '#D4C8CD' }}>{z.idx + 1}구역</span>
                   <span className="result-box__value" style={{ fontSize: '1.3rem', color: 'white' }}>
                     {z.eff !== null ? `${z.eff.toFixed(0)}%` : '—'}
                   </span>
                   {z.za > 0 && (
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 4, lineHeight: 1.4 }}>
+                    <span style={{ fontSize: '0.7rem', color: '#9C8E94', marginTop: 4, lineHeight: 1.4 }}>
                       실제 {fmtArea(z.ia)}<br/>/ 전체 {fmtArea(z.za)}
                     </span>
                   )}
@@ -379,7 +379,7 @@ export default function AreaEfficiency({ data, updateData }) {
               ))}
             </div>
             {factoryArea && (
-              <div style={{ marginTop: 14, textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8' }}>
+              <div style={{ marginTop: 14, textAlign: 'center', fontSize: '0.85rem', color: '#9C8E94' }}>
                 공장 전체 면적: <strong style={{ color: 'white' }}>{fmtArea(factoryArea)}</strong>
               </div>
             )}

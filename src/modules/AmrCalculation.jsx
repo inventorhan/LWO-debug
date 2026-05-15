@@ -146,7 +146,7 @@ export default function AmrCalculation({ data, updateData }) {
         {/* 로딩+언로딩 합계 */}
         <div style={{ height: 1, background: 'var(--color-card-border)', margin: '14px 0' }} />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: '#b91c1c' }}>
+          <div className="result-box full-width" style={{ background: '#B45309' }}>
             <span className="result-box__label">Total 로딩 + 언로딩 시간</span>
             <span className="result-box__value">{fmtN(totalLoadUnloadSec, '초', 1)}</span>
           </div>
@@ -189,7 +189,7 @@ export default function AmrCalculation({ data, updateData }) {
             <span className="result-box__label">AMR 원단위 = ⌈ 총왕복시간 / Cycle ⌉ (소수→올림)</span>
             <span className="result-box__value">
               {baseRaw > 0
-                ? <>{baseRaw.toFixed(2)} → <span style={{ color: '#fbbf24' }}>{amrBaseUnits}대</span></>
+                ? <>{baseRaw.toFixed(2)} → <span style={{ color: '#F59E0B' }}>{amrBaseUnits}대</span></>
                 : '—'}
             </span>
           </div>
@@ -197,7 +197,7 @@ export default function AmrCalculation({ data, updateData }) {
             <span className="result-box__label">가동율 적용 = ⌈ 원단위 / 가동율 ⌉ (충전, 수리 등 시간)</span>
             <span className="result-box__value">
               {adjustedRaw > 0
-                ? <>{adjustedRaw.toFixed(2)} → <span style={{ color: '#fbbf24' }}>{amrAdjustedUnits}대</span></>
+                ? <>{adjustedRaw.toFixed(2)} → <span style={{ color: '#F59E0B' }}>{amrAdjustedUnits}대</span></>
                 : '—'}
             </span>
           </div>
