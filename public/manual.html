@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LWO 물류 분석 Tool — 사용 설명서 (교육용)</title>
+<meta name="description" content="LWO 물류 작업 최적화 분석 도구 — 5개 모듈 사용 가이드 + 공식 + 예시">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lg-red: #A50034;
+    --lg-red-dark: #6F0023;
+    --lg-red-light: #C2185B;
+    --lg-soft: #F4E1E7;
+    --lg-softer: #FAEFF2;
+    --warm-dark: #2A1F24;
+    --warm-mid: #4A4045;
+    --warm-text: #1F1218;
+    --warm-sec: #44383E;
+    --warm-muted: #7C6E74;
+    --border: #E5DCDF;
+    --card-bg: #FBF8F9;
+    --page-bg: #F6F3F4;
+    --ok: #047857;
+    --ok-bg: #D1FAE5;
+    --warn: #B45309;
+    --warn-bg: #FEF3C7;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    font-family: 'Noto Sans KR', -apple-system, 'Segoe UI', sans-serif;
+    color: var(--warm-text);
+    background: var(--page-bg);
+    line-height: 1.75;
+    font-size: 16px;
+  }
+  /* 표지 */
+  .cover {
+    background: linear-gradient(135deg, var(--lg-red-dark) 0%, var(--lg-red) 65%, var(--lg-red-light) 100%);
+    color: white;
+    padding: 80px 24px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at top, rgba(255,255,255,0.15), transparent 60%);
+    pointer-events: none;
+  }
+  .cover-content { position: relative; max-width: 760px; margin: 0 auto; }
+  .cover .brand {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+  .cover h1 small { display: block; font-size: 0.45em; font-weight: 500; opacity: 0.9; margin-top: 10px; letter-spacing: 0.05em; }
+  .cover .subtitle { font-size: 1.05rem; opacity: 0.92; max-width: 540px; margin: 0 auto 28px; }
+  .cover .meta { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; font-size: 0.82rem; opacity: 0.85; }
+  .cover .meta span::before { content: '·'; margin-right: 8px; }
+  .cover .meta span:first-child::before { content: ''; margin: 0; }
+  .cover .actions { margin-top: 32px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cover .actions a {
+    display: inline-block;
+    padding: 11px 22px;
+    background: white;
+    color: var(--lg-red-dark);
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  }
+  .cover .actions a.ghost {
+    background: transparent;
+    color: white;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    box-shadow: none;
+  }
+
+  /* 레이아웃: 사이드 TOC + 본문 */
+  .layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 36px;
+    padding: 40px 24px 80px;
+  }
+  aside.toc {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  aside.toc h4 {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--lg-red-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--lg-red);
+  }
+  aside.toc ol { list-style: none; counter-reset: ch; }
+  aside.toc ol > li { counter-increment: ch; margin-bottom: 4px; }
+  aside.toc ol > li > a {
+    display: block;
+    padding: 7px 10px 7px 32px;
+    color: var(--warm-sec);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 600;
+    border-radius: 6px;
+    position: relative;
+    transition: background .15s, color .15s;
+  }
+  aside.toc ol > li > a::before {
+    content: counter(ch);
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--lg-softer);
+    color: var(--lg-red-dark);
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  aside.toc ol > li > a:hover { background: var(--lg-softer); color: var(--lg-red-dark); }
+  aside.toc ol > li > a.active { background: var(--lg-red); color: white; }
+  aside.toc ol > li > a.active::before { background: white; color: var(--lg-red); }
+  aside.toc ul { list-style: none; padding-left: 32px; margin: 2px 0 6px; }
+  aside.toc ul a {
+    display: block;
+    padding: 4px 8px;
+    color: var(--warm-muted);
+    text-decoration: none;
+    font-size: 0.78rem;
+    border-left: 2px solid var(--border);
+    margin-left: 0;
+  }
+  aside.toc ul a:hover { color: var(--lg-red); border-color: var(--lg-red); }
+  .toc-print-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 9px 12px;
+    background: var(--lg-red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .toc-print-btn:hover { background: var(--lg-red-dark); }
+
+  /* 본문 */
+  main.content { background: white; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 40px 44px; }
+
+  .chapter { padding-top: 18px; margin-bottom: 56px; }
+  .chapter + .chapter { padding-top: 36px; border-top: 1px dashed var(--border); }
+  .chapter-num {
+    display: inline-block;
+    background: var(--lg-softer);
+    color: var(--lg-red-dark);
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  h2.chapter-title {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.2;
+    color: var(--warm-text);
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .chapter-lead { font-size: 1.04rem; color: var(--warm-sec); margin-bottom: 28px; max-width: 640px; }
+
+  h3 {
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: var(--lg-red-dark);
+    margin-top: 32px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--lg-red);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3 .h-num {
+    display: inline-flex;
+    width: 26px; height: 26px;
+    background: var(--lg-red); color: white;
+    border-radius: 6px;
+    align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 800;
+  }
+  h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--warm-text);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+  p, li { font-size: 0.96rem; }
+  ul, ol { padding-left: 22px; margin-bottom: 14px; }
+  li { margin-bottom: 6px; }
+  strong, b { color: var(--lg-red-dark); font-weight: 700; }
+  em { font-style: normal; background: var(--lg-softer); padding: 1px 6px; border-radius: 4px; font-weight: 700; color: var(--lg-red-dark); }
+
+  /* Step (번호 배지 + 본문) */
+  .steps { margin: 14px 0 18px; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .step:last-child { border-bottom: 0; }
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--lg-red), var(--lg-red-dark));
+    color: white;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(165,0,52,0.25);
+    flex-shrink: 0;
+  }
+  .step-title { font-weight: 800; color: var(--warm-text); margin-bottom: 4px; font-size: 1rem; }
+  .step-body { color: var(--warm-sec); font-size: 0.92rem; line-height: 1.7; }
+
+  /* 공식 박스 */
+  pre.formula {
+    background: var(--warm-dark);
+    color: #FAFAFA;
+    padding: 16px 18px;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.86rem;
+    line-height: 1.85;
+    margin: 14px 0;
+    overflow-x: auto;
+    border-left: 4px solid var(--lg-red);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre.formula .com { color: #C2CB80; font-style: italic; }
+  pre.formula .var { color: #FFD479; font-weight: 700; }
+  pre.formula .res { color: #82E0AA; font-weight: 700; }
+
+  /* 노트 박스 */
+  .note {
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 14px 0;
+    border-left: 4px solid;
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+  .note .note-label { font-weight: 800; margin-right: 8px; }
+  .note.info { background: var(--lg-softer); border-color: var(--lg-red); }
+  .note.info .note-label { color: var(--lg-red-dark); }
+  .note.ok { background: var(--ok-bg); border-color: var(--ok); }
+  .note.ok .note-label { color: var(--ok); }
+  .note.warn { background: var(--warn-bg); border-color: var(--warn); }
+  .note.warn .note-label { color: var(--warn); }
+
+  /* 표 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.9rem;
+    background: white;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--lg-soft);
+    color: var(--lg-red-dark);
+    font-weight: 800;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--lg-red);
+    font-size: 0.86rem;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--warm-sec); }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:nth-child(even) { background: var(--page-bg); }
+
+  /* 모듈 카드 (개요) */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .module-card {
+    padding: 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    border-top: 4px solid var(--lg-red);
+  }
+  .module-card .ico { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+  .module-card h5 { font-size: 1rem; font-weight: 800; color: var(--warm-text); margin-bottom: 4px; }
+  .module-card p { font-size: 0.82rem; color: var(--warm-muted); margin: 0; line-height: 1.6; }
+
+  /* 예시 박스 (계산 풀이) */
+  .example {
+    border: 1px solid var(--lg-soft);
+    background: var(--lg-softer);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+  .example h5 {
+    color: var(--lg-red-dark);
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .example h5::before { content: '🧮'; font-size: 1.1rem; }
+
+  /* 푸터 */
+  footer {
+    background: var(--warm-dark);
+    color: rgba(255,255,255,0.7);
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+  footer strong { color: white; font-weight: 700; }
+  footer a { color: #FFB8C8; }
+
+  /* 반응형 — 모바일 */
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; padding: 24px 14px 60px; gap: 18px; }
+    aside.toc { position: static; max-height: none; }
+    aside.toc ol > li > a { padding-left: 32px; }
+    main.content { padding: 24px 18px; }
+    h2.chapter-title { font-size: 1.55rem; }
+    h3 { font-size: 1.05rem; }
+    .step { grid-template-columns: 36px 1fr; gap: 10px; }
+    .step-num { width: 30px; height: 30px; font-size: 0.88rem; }
+    pre.formula { font-size: 0.78rem; padding: 12px 14px; }
+    table { font-size: 0.82rem; }
+    th, td { padding: 7px 8px; }
+  }
+
+  /* 인쇄 스타일 */
+  @media print {
+    body { background: white; font-size: 11pt; line-height: 1.55; }
+    .cover {
+      page-break-after: always;
+      padding: 80px 40px;
+      background: white !important;
+      color: var(--lg-red-dark) !important;
+      border-bottom: 8px solid var(--lg-red);
+    }
+    .cover .brand, .cover h1 small, .cover .subtitle, .cover .meta { color: var(--warm-sec) !important; }
+    .cover h1 { color: var(--lg-red-dark) !important; }
+    .cover .actions, aside.toc { display: none !important; }
+    .layout { display: block; max-width: none; padding: 0; }
+    main.content { box-shadow: none; border-radius: 0; padding: 18mm 14mm; background: white; }
+    .chapter { page-break-before: always; padding-top: 0; }
+    .chapter:first-child { page-break-before: auto; }
+    h2.chapter-title { font-size: 22pt; }
+    h3 { font-size: 13pt; margin-top: 18pt; page-break-after: avoid; }
+    .step, pre.formula, .example, .note, table { page-break-inside: avoid; }
+    pre.formula { background: #2A1F24 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    footer { background: white; color: var(--warm-muted); border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="cover-content">
+    <div class="brand">📦 LWO Tool Training</div>
+    <h1>LWO 물류 분석 Tool<small>사용 설명서 — 교육용 가이드북</small></h1>
+    <p class="subtitle">물류 작업 최적화(Logistics Work Optimize)의 5가지 핵심 KPI를<br>휴대폰 하나로 측정·분석·시각화하는 방법</p>
+    <div class="meta">
+      <span>버전 v1.1</span>
+      <span>5개 분석 모듈</span>
+      <span>처음 사용자 대상</span>
+    </div>
+    <div class="actions">
+      <a href="./" target="_blank">▶ 앱 실행하기</a>
+      <a href="#" class="ghost" onclick="window.print(); return false;">🖨 인쇄 / PDF</a>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="toc">
+    <h4>목차</h4>
+    <ol>
+      <li><a href="#intro">시작하기 · 공통 사용법</a></li>
+      <li><a href="#worker">작업자 부하율</a>
+        <ul>
+          <li><a href="#worker-purpose">왜 측정하나?</a></li>
+          <li><a href="#worker-step">측정 절차</a></li>
+          <li><a href="#worker-formula">공식 / 판정</a></li>
+          <li><a href="#worker-example">계산 예시</a></li>
+        </ul>
+      </li>
+      <li><a href="#elevator">E/V 부하율</a>
+        <ul>
+          <li><a href="#elevator-purpose">왜 측정하나?</a></li>
+          <li><a href="#elevator-step">측정 절차</a></li>
+          <li><a href="#elevator-formula">적재율 + 부하율</a></li>
+        </ul>
+      </li>
+      <li><a href="#area">면적 효율</a>
+        <ul>
+          <li><a href="#area-purpose">왜 측정하나?</a></li>
+          <li><a href="#area-step">측정 절차</a></li>
+          <li><a href="#area-formula">면적 + 체적 공식</a></li>
+        </ul>
+      </li>
+      <li><a href="#inventory">재고 보관량</a>
+        <ul>
+          <li><a href="#inv-purpose">왜 산출하나?</a></li>
+          <li><a href="#inv-step">4단계 입력</a></li>
+          <li><a href="#inv-example">계산 예시</a></li>
+        </ul>
+      </li>
+      <li><a href="#amr">AMR 대수</a>
+        <ul>
+          <li><a href="#amr-step">3단계 입력</a></li>
+          <li><a href="#amr-formula">전체 공식</a></li>
+          <li><a href="#amr-example">상세 계산 풀이</a></li>
+        </ul>
+      </li>
+      <li><a href="#glossary">부록 · 용어집 / FAQ</a></li>
+    </ol>
+    <button class="toc-print-btn" onclick="window.print()">🖨 PDF로 저장 / 인쇄</button>
+  </aside>
+
+  <main class="content">
+
+    <!-- ============= INTRO ============= -->
+    <section class="chapter" id="intro">
+      <span class="chapter-num">CHAPTER 1</span>
+      <h2 class="chapter-title">시작하기 — LWO Tool 소개</h2>
+      <p class="chapter-lead">LWO는 물류 현장의 다섯 가지 핵심 지표를 휴대폰 하나로 측정·계산할 수 있는 도구입니다. 스톱워치 + 줄자 + 메모지를 화면 한 곳에서 처리합니다.</p>
+
+      <h3><span class="h-num">1</span>5개 분석 모듈 한눈에 보기</h3>
+      <div class="module-grid">
+        <div class="module-card">
+          <span class="ico">👷</span>
+          <h5>작업자 부하율</h5>
+          <p>한 명의 운반 사이클(피킹·이동·로딩·회수) 시간을 실측해 <b>부하율(%)</b> 산출</p>
+        </div>
+        <div class="module-card">
+          <span class="ico">🛗</span>
+          <h5>E/V 부하율</h5>
+          <p>엘리베이터 호기별 운반 시간 + 카(케이지) 면적 대비 <b>적재율</b></p>
+        </div>
+        <div class="module-card">
+          <span class="ico">📐</span>
+          <h5>면적 효율</h5>
+          <p>공장·구역별 면적 사용 효율 + 적재물의 <b>체적(높이) 효율</b></p>
+        </div>
+        <div class="module-card">
+          <span class="ico">📦</span>
+          <h5>재고 보관량</h5>
+          <p>고객 요구량 + 운반 리드타임 + 운영 재고 합산 <b>최종 적정 재고</b></p>
+        </div>
+        <div class="module-card">
+          <span class="ico">🤖</span>
+          <h5>AMR 대수</h5>
+          <p>생산 Tact + AMR 왕복 시간을 비교해 <b>필요 도입 대수</b> 산출</p>
+        </div>
+      </div>
+
+      <h3><span class="h-num">2</span>공통 사용 흐름</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">모듈 선택</div><div class="step-body">하단 탭(휴대폰) 또는 좌측 사이드바(PC)에서 분석하려는 모듈을 선택합니다.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">기초 정보 입력</div><div class="step-body">치수·UPH·시간 등을 입력합니다. 빈 칸은 0으로 계산됩니다. 각 섹션 오른쪽 <em>?</em> 도움말 버튼을 활용하세요.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">측정 / 자동 산출</div><div class="step-body">스톱워치가 있는 모듈은 ▶ 시작 → ⏹ 종료. 나머지는 입력 즉시 자동 계산됩니다.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div><div class="step-title">저장 / 내보내기</div><div class="step-body">상단의 💾 저장(JSON), 📊 엑셀 버튼으로 결과를 보관합니다.</div></div>
+        </div>
+      </div>
+
+      <h3><span class="h-num">3</span>상단 헤더 버튼</h3>
+      <table>
+        <thead><tr><th>버튼</th><th>용도</th></tr></thead>
+        <tbody>
+          <tr><td>📂 열기</td><td>이전에 저장한 JSON 파일 불러오기</td></tr>
+          <tr><td>💾 저장</td><td>현재 입력을 <code>Documents/LWO/</code> 폴더에 JSON으로 저장</td></tr>
+          <tr><td>📊 엑셀</td><td>5개 모듈 전체를 엑셀 파일로 내보내기</td></tr>
+          <tr><td>📖 설명서</td><td>앱 내장 도움말 모달 (이 가이드의 요약 버전)</td></tr>
+          <tr><td>🔄 초기화</td><td>모든 입력 데이터 삭제 (⚠ 복구 불가)</td></tr>
+        </tbody>
+      </table>
+      <div class="note ok"><span class="note-label">✅ TIP</span>입력값은 브라우저에 자동 저장됩니다. 앱을 끄고 다시 켜도 값이 유지됩니다.</div>
+      <div class="note warn"><span class="note-label">⚠ 주의</span>여러 사람이 같은 휴대폰을 공유해서 쓰는 경우, 저장 직전 반드시 🔄 초기화 → 측정 → 💾 저장 패턴으로 사용하세요.</div>
+    </section>
+
+    <!-- ============= WORKER ============= -->
+    <section class="chapter" id="worker">
+      <span class="chapter-num">CHAPTER 2</span>
+      <h2 class="chapter-title">👷 작업자 부하율</h2>
+      <p class="chapter-lead">한 명의 작업자(또는 운반 수단)가 한 사이클을 도는 데 걸리는 시간을 실측해 부하율(%)을 산출합니다. 인원·운반수단별 효율 비교에 사용합니다.</p>
+
+      <h3 id="worker-purpose"><span class="h-num">1</span>이 모듈은 언제 쓰나요?</h3>
+      <ul>
+        <li>특정 운반 라인의 <b>부하 정도</b>를 정량적으로 판단하고 싶을 때</li>
+        <li>도보, 대차, AGV 등 <b>운반 수단별 효율</b>을 비교할 때</li>
+        <li>인원 추가 또는 동선 단축 의사결정 근거가 필요할 때</li>
+      </ul>
+
+      <h3 id="worker-step"><span class="h-num">2</span>측정 절차 (4단계)</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">작업자 추가/선택</div><div class="step-body">상단 탭에서 측정할 사람을 선택합니다. 신규 인원은 <em>명단 관리</em> 버튼으로 추가.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">운반 종류 / 속도 / 가중치 설정</div><div class="step-body">도보(2.3 m/s) · 대차(1.8) · 파렛트(2.0) · AGV(1.5) 중 선택하면 속도가 자동 입력됩니다. 부하 가중치는 1시간 중 실제 작업 비율 (보통 0.8 = 80%).</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">4단계 시간 기록</div><div class="step-body">▶ 시작 / ⏹ 종료 버튼으로 각 단계의 시간을 잽니다. ① 피킹 ② 이동 ③ 로딩/언로딩 ④ 회수 — 4단계 모두 측정해야 한 사이클입니다.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div><div class="step-title">3~5회 반복 측정</div><div class="step-body">평균값 신뢰도를 위해 + 회차 버튼으로 같은 사이클을 반복 측정합니다.</div></div>
+        </div>
+      </div>
+
+      <h3 id="worker-formula"><span class="h-num">3</span>공식과 판정 기준</h3>
+      <pre class="formula"><span class="com"># 총 운반 시간</span>
+총 운반 시간 = Σ (피킹 + 이동 + 로딩/언로딩 + 회수) Gap
+
+<span class="com"># 부하 가중 시간 (= 가동 가능한 최대 운반 시간)</span>
+부하 가중 시간 = 3600초 × <span class="var">부하 가중치</span>
+
+<span class="com"># 결과</span>
+<span class="res">부하율(%) = 총 운반 시간 ÷ 부하 가중 시간 × 100</span></pre>
+
+      <table>
+        <thead><tr><th>부하율</th><th>판정</th><th>대응</th></tr></thead>
+        <tbody>
+          <tr><td>~ 70%</td><td>여유 있음</td><td>인원 재배치 검토</td></tr>
+          <tr><td>70 ~ 90%</td><td>적정 부하</td><td>현행 유지</td></tr>
+          <tr><td>90% 이상</td><td>과부하 ⚠</td><td>인원 추가 / 동선 단축 / 운반 수단 변경</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="worker-example"><span class="h-num">4</span>계산 예시</h3>
+      <div class="example">
+        <h5>대차 작업자 1명, 가중치 0.8 (80% 가동)</h5>
+        <table style="margin: 0 0 12px;">
+          <thead><tr><th>회차</th><th>피킹</th><th>이동</th><th>로딩/언로딩</th><th>회수</th><th>소계</th></tr></thead>
+          <tbody>
+            <tr><td>1회</td><td>40초</td><td>200초</td><td>30초</td><td>120초</td><td>390초</td></tr>
+            <tr><td>2회</td><td>45초</td><td>210초</td><td>35초</td><td>115초</td><td>405초</td></tr>
+            <tr><td>3회</td><td>38초</td><td>205초</td><td>32초</td><td>120초</td><td>395초</td></tr>
+          </tbody>
+        </table>
+        <pre class="formula">총 운반 시간 = 390 + 405 + 395 = 1190초
+부하 가중 시간 = 3600 × 0.8 = 2880초
+<span class="res">부하율 = 1190 ÷ 2880 × 100 ≈ 41.3%</span>
+→ <b>여유 있음.</b> 동일 작업자에게 추가 임무 배정 가능</pre>
+      </div>
+
+      <div class="note info"><span class="note-label">💡</span>운반 종류에 없는 수단은 화면 하단 <em>운반 관리</em> 버튼으로 직접 추가 (이름·속도 입력).</div>
+    </section>
+
+    <!-- ============= ELEVATOR ============= -->
+    <section class="chapter" id="elevator">
+      <span class="chapter-num">CHAPTER 3</span>
+      <h2 class="chapter-title">🛗 E/V 부하율</h2>
+      <p class="chapter-lead">공장 내 여러 엘리베이터의 운반 효율을 비교하고, 카(케이지) 면적 대비 실제 적재율을 확인합니다.</p>
+
+      <h3 id="elevator-purpose"><span class="h-num">1</span>이 모듈은 언제 쓰나요?</h3>
+      <ul>
+        <li>특정 호기의 사용 빈도가 너무 높지 않은지 점검할 때</li>
+        <li>층간 운반의 병목 구간을 시각적으로 비교할 때</li>
+        <li>호기 신설/감축 의사결정의 정량 근거가 필요할 때</li>
+      </ul>
+
+      <h3 id="elevator-step"><span class="h-num">2</span>측정 절차</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">호기 선택 / 추가</div><div class="step-body">기본 1호기. 더 측정하려면 <em>+ 호기</em> 버튼으로 추가. 호기별 데이터는 독립 저장됩니다.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">E/V 가로 / 세로 입력</div><div class="step-body">카(케이지) 내부 유효 치수를 <b>m 단위</b>로 입력. 예: 2.2 × 1.5 → 면적 3.3 m².</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">실 적재 항목 추가</div><div class="step-body">박스/대차/파렛트/손수레의 종류·개수·가로·세로(m)를 입력. 여러 종류면 + 적재 항목 반복.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div><div class="step-title">4단계 측정 (로딩 / 이동 / 언로딩 / 회수)</div><div class="step-body">로딩 시 자재 종수, 이동 시 층(1~10), 언로딩 시 공정 번호도 함께 입력. 회차는 + 탭으로 추가.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div><div class="step-title">부하 가중치 조정</div><div class="step-body">측정 결과 카드에서 0.5~1.0 사이 조정. 시나리오별 결과 비교에 유용.</div></div>
+        </div>
+      </div>
+
+      <h3 id="elevator-formula"><span class="h-num">3</span>공식 — 적재율 + 부하율</h3>
+      <pre class="formula"><span class="com"># 1) 면적</span>
+E/V 면적     = 가로 × 세로                        [m²]
+실 적재 면적 = Σ (가로 × 세로 × 개수)              [m²]
+
+<span class="com"># 2) 적재율 (0.9 = 통로/여유 보정)</span>
+<span class="res">적재율(%) = 실 적재 ÷ E/V 면적 × 0.9 × 100</span>
+
+<span class="com"># 3) 부하율</span>
+부하 가중 시간 = 3600 × <span class="var">가중치</span>
+<span class="res">부하율(%)     = 총 운반 시간 ÷ 부하 가중 시간 × 100</span></pre>
+
+      <h3><span class="h-num">4</span>호기별 비교 대시보드</h3>
+      <p>2대 이상 호기를 측정하면 화면 하단에 자동으로 표시됩니다:</p>
+      <ul>
+        <li><b>호기별 작업 시간 막대그래프</b> — 로딩/이동/언로딩/회수 색상 구분</li>
+        <li><b>호기별 부하율 가로 막대</b> — 90% 초과 시 빨간색 자동 강조</li>
+      </ul>
+      <div class="note ok"><span class="note-label">✅</span>호기별 격차가 크다면 운영 정책 재검토 시그널입니다.</div>
+    </section>
+
+    <!-- ============= AREA ============= -->
+    <section class="chapter" id="area">
+      <span class="chapter-num">CHAPTER 4</span>
+      <h2 class="chapter-title">📐 면적 효율</h2>
+      <p class="chapter-lead">공장을 여러 구역으로 나눠 면적 사용 효율 + 적재 체적(높이) 효율을 동시에 분석합니다. 공간 재배치 검토 시 활용.</p>
+
+      <h3 id="area-purpose"><span class="h-num">1</span>이 모듈은 언제 쓰나요?</h3>
+      <ul>
+        <li>창고/공장 공간이 부족하다고 느낄 때 — 정말로 부족한지 데이터로 검증</li>
+        <li>어느 구역이 과적·저적되어 있는지 시각적으로 파악</li>
+        <li>높이 방향(체적)을 충분히 활용 중인지 확인</li>
+      </ul>
+
+      <h3 id="area-step"><span class="h-num">2</span>측정 절차</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">공장 전체 치수 입력</div><div class="step-body">공장 가로·세로(m). 사진은 선택. 이 값이 전체 효율 분석의 분모로 사용됩니다.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">구역 추가</div><div class="step-body">+ 구역 버튼으로 1구역, 2구역, … 추가. 각 구역의 가로·세로·사진 입력.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">적재 항목 입력</div><div class="step-body">박스/파렛트/대차/Rack/기타 — 종류·개수·가로·세로(m) + 최저/최고 높이(m) + 체적 가중치 (보통 0.8) 입력. 실 적재 사진도 함께 기록 가능.</div></div>
+        </div>
+      </div>
+
+      <h3 id="area-formula"><span class="h-num">3</span>공식 — 면적 + 체적</h3>
+      <pre class="formula"><span class="com"># 면적 효율</span>
+구역 면적    = 가로 × 세로                  [m²]
+합계 면적    = 가로 × 세로 × 개수            [m²]
+<span class="res">면적 효율(%) = 합계 면적 ÷ 구역 면적 × 100</span>
+
+<span class="com"># 체적 효율</span>
+<span class="res">체적 손실율(%) = ((최고 − 최저) ÷ 최고) × 가중치(%)</span>
+평균 체적 사용율 = ((최고 − 손실) ÷ 최고) 항목 평균</pre>
+
+      <div class="example">
+        <h5>최고 5.0m · 최저 0.5m · 가중치 0.5</h5>
+        <pre class="formula" style="margin:0;">체적 손실율 = ((5.0 − 0.5) ÷ 5.0) × 0.5 × 100
+            = (4.5 ÷ 5.0) × 0.5 × 100
+            = 0.9 × 0.5 × 100
+<span class="res">            = 45.0 %</span>
+사용율 = 100 − 45.0 = 55.0 %</pre>
+      </div>
+
+      <table>
+        <thead><tr><th>구역 효율</th><th>판정</th><th>대응</th></tr></thead>
+        <tbody>
+          <tr><td>~ 50%</td><td>활용도 낮음</td><td>다른 구역 통합 / 재배치</td></tr>
+          <tr><td>50 ~ 90%</td><td>적정</td><td>현행 유지</td></tr>
+          <tr><td>90% 초과</td><td>포화 ⚠</td><td>통로 확보 / 분산 필요</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= INVENTORY ============= -->
+    <section class="chapter" id="inventory">
+      <span class="chapter-num">CHAPTER 5</span>
+      <h2 class="chapter-title">📦 재고 보관량 (적정 재고 산출)</h2>
+      <p class="chapter-lead">고객사로 공급하는 물량이 부족하지 않도록 일일 부족 수량 + 운반 리드타임 + 고객사 운영 재고를 모두 합산해 최종 보관량을 도출합니다.</p>
+
+      <h3 id="inv-purpose"><span class="h-num">1</span>왜 산출하나요?</h3>
+      <p><b>"고객사 라인이 절대 멈추지 않게"</b> 자사 창고에 항상 확보해야 하는 최소 재고를 정량화합니다. 너무 많으면 보관 비용 낭비, 너무 적으면 라인 정지 리스크.</p>
+
+      <h3 id="inv-step"><span class="h-num">2</span>4단계 입력</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">①</div>
+          <div><div class="step-title">자사 기초 재고 — 고객/자사 라인</div>
+            <div class="step-body">
+              고객 주간/야간 UPH 및 작업 시간, 자사 주간/야간 UPH 및 작업 시간 입력.<br>
+              <b>일일 부족 수량 = 고객 일일 − 자사 일일</b> 자동 산출 (양수 → 부족 / 음수 → 잉여)
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">②</div>
+          <div><div class="step-title">운반 리드타임 → 수량 환산</div>
+            <div class="step-body">
+              4가지 시간(초) 입력 → 자동으로 수량(대)으로 환산:<br>
+              • <b>숙성 시간</b>: 출하 전 보관 (품질 안정화)<br>
+              • <b>안심 재고</b>: 운반 사고·설비 고장·차량 수배 대비 (정책성)<br>
+              • <b>Depot ~ 상차</b>: 출하 대기 + 상차 시간<br>
+              • <b>자사 ~ 고객 이동</b>: 운송 시간
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">③</div>
+          <div><div class="step-title">고객사 운영 재고</div>
+            <div class="step-body">
+              • <b>Dock ~ Depot 하차</b>: 고객 측 하역<br>
+              • <b>대기 시간</b>: 조립 라인 투입 전 보관<br>
+              • <b>고객 안전 재고</b>: 7대 로스 감안
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">④</div>
+          <div><div class="step-title">최종 적정 재고 = ① + ② + ③</div><div class="step-body">자동 합산되어 화면 최하단에 표시됩니다.</div></div>
+        </div>
+      </div>
+
+      <h3><span class="h-num">3</span>공식 전체</h3>
+      <pre class="formula"><span class="com"># 일일 생산량</span>
+고객 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
+자사 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
+<span class="res">일일 부족 = 고객 일일 − 자사 일일</span>
+
+<span class="com"># 시간 → 수량 환산 (모두 고객 주간 UPH 기준)</span>
+수량 = (시간초 ÷ 3600) × <span class="var">고객 주간 UPH</span>
+
+<span class="com"># 합산</span>
+리드타임 재고 = 숙성 + 안심 + 상차 + 이동
+운영 재고     = 하차 + 대기 + 안전 재고
+<span class="res">최종 적정 재고 = 부족 수량 + 리드타임 재고 + 운영 재고</span></pre>
+
+      <h3 id="inv-example"><span class="h-num">4</span>계산 예시</h3>
+      <div class="example">
+        <h5>고객 주간 UPH 300대 · 8h, 야간 200대 · 4h / 자사 주간 200대 · 8h, 야간 100대 · 4h</h5>
+        <pre class="formula" style="margin:0 0 10px;">고객 일일 = 300×8 + 200×4 = 2400 + 800 = 3200대
+자사 일일 = 200×8 + 100×4 = 1600 + 400 = 2000대
+<span class="res">부족 = 3200 − 2000 = 1200대</span>
+
+리드타임: 숙성 3600s + 안심 7200s + 상차 20s + 이동 300s = 11120s
+  → (11120 ÷ 3600) × 300 = <span class="res">927대</span>
+운영:     하차 20s + 대기 160s + 안전 3600s = 3780s
+  → (3780 ÷ 3600) × 300 = <span class="res">315대</span>
+
+<span class="res">최종 적정 재고 = 1200 + 927 + 315 = 2,442 대</span></pre>
+      </div>
+
+      <div class="note info"><span class="note-label">💡</span>모든 시간 단위는 <b>초(sec)</b>. 1시간 = 3600초.</div>
+    </section>
+
+    <!-- ============= AMR ============= -->
+    <section class="chapter" id="amr">
+      <span class="chapter-num">CHAPTER 6</span>
+      <h2 class="chapter-title">🤖 AMR 대수</h2>
+      <p class="chapter-lead">공장 운영에 필요한 AMR(자율주행 로봇) 대수를 산출합니다. 생산 Tact와 AMR 왕복 시간을 비교해 최소 필요 대수 + 예비를 계산.</p>
+
+      <h3 id="amr-step"><span class="h-num">1</span>3단계 입력</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">생산 수량 정보</div><div class="step-body">Tact Time(초), 회수율(%), 장입 수량(개/회). → UPH·운행 횟수·Cycle Time이 자동 산출.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">AMR 운행 정보</div><div class="step-body">AMR Speed(m/s), 편도 거리(m), 로딩 횟수·시간, 언로딩 횟수·시간 → 총 왕복 시간 산출.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">가동율 / 예비</div><div class="step-body">가동율(0~1, 충전·수리 시간 보정. 보통 0.8), Spare(예비 대수, 보통 1). → 최종 필요 대수.</div></div>
+        </div>
+      </div>
+
+      <h3 id="amr-formula"><span class="h-num">2</span>공식 전체</h3>
+      <pre class="formula"><span class="com"># 1) 생산 수량 정보로 기준 사이클 산출</span>
+UPH        = (3600 ÷ Tact) × <span class="var">회수율</span>
+운행 횟수   = UPH ÷ 장입 수량
+<span class="res">Cycle Time = 3600 ÷ 운행 횟수    (한 번 왕복 안에 처리해야 할 시간)</span>
+
+<span class="com"># 2) 실제 왕복 시간</span>
+왕복 거리       = 편도 거리 × 2
+Total 로딩      = 로딩 횟수 × 시간
+Total 언로딩    = 언로딩 횟수 × 시간
+<span class="res">총 왕복 시간    = (왕복 거리 ÷ Speed) + Total 로딩 + Total 언로딩</span>
+
+<span class="com"># 3) 필요 대수 (올림 = ⌈x⌉)</span>
+원단위        = ⌈ 총 왕복시간 ÷ Cycle ⌉
+가동율 적용   = ⌈ 원단위 ÷ <span class="var">가동율</span> ⌉
+<span class="res">필요 대수     = 가동율 적용 + Spare</span></pre>
+
+      <h3 id="amr-example"><span class="h-num">3</span>상세 계산 풀이</h3>
+      <div class="example">
+        <h5>Tact 60s, 회수율 90%, 장입 5개/회 / Speed 1.5m/s, 편도 60m, 로딩/언로딩 각 1회 × 15s / 가동율 0.8, Spare 1</h5>
+        <pre class="formula" style="margin:0;"><span class="com"># 1) 기준</span>
+UPH        = 3600 ÷ 60 × 0.9 = <span class="res">54</span>
+운행 횟수   = 54 ÷ 5 = <span class="res">10.8 회/h</span>
+Cycle      = 3600 ÷ 10.8 ≈ <span class="res">333 초</span>
+
+<span class="com"># 2) 왕복</span>
+왕복 거리   = 60 × 2 = 120 m
+왕복 시간   = 120 ÷ 1.5 + 15 + 15 = <span class="res">110 초</span>
+
+<span class="com"># 3) 대수 (소수 → 올림)</span>
+원단위      = ⌈ 110 ÷ 333 ⌉ = ⌈ 0.33 ⌉ = <span class="res">1 대</span>
+가동율 적용 = ⌈ 1 ÷ 0.8 ⌉  = ⌈ 1.25 ⌉ = <span class="res">2 대</span>
+<span class="res">필요 대수    = 2 + 1 = 3 대</span></pre>
+      </div>
+
+      <div class="note warn"><span class="note-label">⚠</span>총 왕복 시간이 Cycle Time보다 짧아야 1대로 처리됩니다. 둘 비교를 항상 확인하세요.</div>
+    </section>
+
+    <!-- ============= GLOSSARY ============= -->
+    <section class="chapter" id="glossary">
+      <span class="chapter-num">APPENDIX</span>
+      <h2 class="chapter-title">부록 — 용어집 / FAQ</h2>
+
+      <h3><span class="h-num">A</span>주요 용어 정리</h3>
+      <table>
+        <thead><tr><th>용어</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><b>UPH</b></td><td>Units Per Hour — 시간당 생산/처리 수량</td></tr>
+          <tr><td><b>Tact Time</b></td><td>1개 생산에 걸리는 표준 시간 (초)</td></tr>
+          <tr><td><b>회수율</b></td><td>전체 생산 대비 양품 비율 (%)</td></tr>
+          <tr><td><b>부하 가중치</b></td><td>1시간 중 실제 가동 가능한 비율 (0~1)</td></tr>
+          <tr><td><b>리드타임</b></td><td>주문 ~ 납품까지 걸리는 총 시간</td></tr>
+          <tr><td><b>숙성 보관</b></td><td>품질 안정화를 위한 출하 전 보관</td></tr>
+          <tr><td><b>안심 재고</b></td><td>운반 사고/고장 등 돌발 상황 대비 추가 재고</td></tr>
+          <tr><td><b>Depot</b></td><td>물류 거점 / 출하 대기 장소</td></tr>
+          <tr><td><b>Dock</b></td><td>화물 하역장</td></tr>
+          <tr><td><b>7대 로스</b></td><td>7가지 운영 손실 (불량/대기/이동 등) 감안 개념</td></tr>
+          <tr><td><b>AMR</b></td><td>Autonomous Mobile Robot — 자율주행 로봇</td></tr>
+          <tr><td><b>AGV</b></td><td>Automated Guided Vehicle — 무인 운반차</td></tr>
+          <tr><td><b>Spare</b></td><td>예비 대수 — 고장 대비 추가 보유</td></tr>
+          <tr><td><b>⌈ x ⌉</b></td><td>올림 (ceiling). 소수는 무조건 다음 정수</td></tr>
+        </tbody>
+      </table>
+
+      <h3><span class="h-num">B</span>자주 묻는 질문</h3>
+      <h4>Q. 측정 중 다른 앱으로 갔다가 돌아오면 타이머는 어떻게 되나요?</h4>
+      <p>계속 돌아갑니다. 단 ⏹ 종료 버튼은 직접 눌러야 시간이 기록됩니다.</p>
+      <h4>Q. 저장한 JSON 파일은 어디에 있나요?</h4>
+      <p>안드로이드의 경우 <code>Documents/LWO/</code> 폴더에 저장됩니다. 웹 버전은 다운로드 폴더로 받습니다.</p>
+      <h4>Q. 여러 사람이 같은 휴대폰을 공유해 쓸 수 있나요?</h4>
+      <p>가능합니다. 다만 사람을 바꿀 때마다 💾 저장(파일명 변경) → 🔄 초기화 → 다음 사람 측정 패턴을 권장합니다.</p>
+      <h4>Q. 모든 모듈을 다 채워야 하나요?</h4>
+      <p>아니요. 필요한 모듈만 측정해도 됩니다. 빈 모듈은 0으로 처리되어 엑셀 내보내기 시에도 빈 셀로 나옵니다.</p>
+      <h4>Q. 부하율 / 효율의 절대 기준은 표준입니까?</h4>
+      <p>업종/현장에 따라 다릅니다. 본 가이드의 70%/90% 기준은 일반 제조 물류 권장값이며, 자사 운영 정책에 맞춰 재정의해 사용하세요.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p><strong>LWO 물류 분석 Tool — 사용 설명서 (교육용)</strong></p>
+  <p>본 가이드는 처음 사용자를 위한 종합 안내서입니다. 모듈별 상세 도움말은 앱 내 <em>?</em> 버튼을 활용하세요.</p>
+  <p style="margin-top:8px;opacity:0.6;font-size:0.78rem;">© 2026 LWO · Designed by Haneol Lee · Advised by JS Kim</p>
+</footer>
+
+<script>
+  /* 스크롤 시 TOC 활성 항목 표시 */
+  (function() {
+    const tocLinks = document.querySelectorAll('aside.toc ol > li > a');
+    const chapters = Array.from(document.querySelectorAll('section.chapter'));
+    if (!chapters.length) return;
+    const onScroll = () => {
+      const y = window.scrollY + 80;
+      let current = chapters[0].id;
+      for (const c of chapters) {
+        if (c.offsetTop <= y) current = c.id;
+      }
+      tocLinks.forEach(a => {
+        const isActive = a.getAttribute('href') === '#' + current;
+        a.classList.toggle('active', isActive);
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>
