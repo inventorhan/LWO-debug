@@ -295,7 +295,7 @@ export default function WorkerWorkload({
             >{idx + 1}</button>
           ))}
           <button onClick={handleAddCycle} className="cycle-tab-btn"
-            style={{ background: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
+            style={{ background: '#FDF2F4', color: '#A50034', borderColor: '#E8C5CC' }}
             title="회차 추가">+</button>
         </div>
 

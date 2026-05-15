@@ -204,7 +204,7 @@ export default function ElevatorWorkload({
             </div>
           </div>
         ))}
-        <button className="btn" style={{ width: '100%', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', marginTop: 4 }}
+        <button className="btn" style={{ width: '100%', background: '#FDF2F4', color: '#A50034', border: '1px solid #E8C5CC', marginTop: 4 }}
           onClick={addElevatorLoadItem}>＋ 적재 항목 추가</button>
       </div>
 
@@ -262,7 +262,7 @@ export default function ElevatorWorkload({
             >{idx + 1}</button>
           ))}
           <button onClick={handleAddCycle} className="cycle-tab-btn"
-            style={{ background: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
+            style={{ background: '#FDF2F4', color: '#A50034', borderColor: '#E8C5CC' }}
             title="회차 추가">+</button>
         </div>
 

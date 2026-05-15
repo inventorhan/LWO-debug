@@ -2,17 +2,18 @@
 
 /* ===== CSS Variables ===== */
 :root {
-  --color-primary: #1565C0;
-  --color-primary-light: #1E88E5;
-  --color-primary-dark: #0D47A1;
+  /* LG Active Red 브랜드 컬러 */
+  --color-primary: #A50034;
+  --color-primary-light: #C8113F;
+  --color-primary-dark: #7A0026;
 
-  --color-accent: #D32F2F;
-  --color-accent-light: #EF5350;
-  --color-accent-dark: #B71C1C;
+  --color-accent: #424242;
+  --color-accent-light: #6B6B6B;
+  --color-accent-dark: #212121;
 
-  --color-card-bg: #E3F2FD;
-  --color-card-border: #90CAF9;
-  --color-card-section: #BBDEFB;
+  --color-card-bg: #FDF5F7;
+  --color-card-border: #E8C5CC;
+  --color-card-section: #F3D6DC;
 
   --color-bg: #F0F4F8;
   --color-surface: #FFFFFF;
@@ -535,7 +536,7 @@ select.input-field {
     display: flex;
     flex-direction: column;
     width: var(--sidebar-w);
-    background: linear-gradient(180deg, #0D47A1, #1565C0);
+    background: linear-gradient(180deg, var(--color-primary-dark), var(--color-primary));
     color: white;
     position: fixed;
     top: 0;

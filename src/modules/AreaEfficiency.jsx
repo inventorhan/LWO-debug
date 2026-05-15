@@ -177,7 +177,7 @@ export default function AreaEfficiency({ data, updateData }) {
               onClick={() => setActiveZone(i)}>{i + 1}구역</button>
           ))}
           <button className="cycle-tab-btn" onClick={addZone}
-            style={{ padding: '0 12px', minWidth: 'auto', height: 38, fontSize: '0.85rem', background: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}>
+            style={{ padding: '0 12px', minWidth: 'auto', height: 38, fontSize: '0.85rem', background: '#FDF2F4', color: '#A50034', borderColor: '#E8C5CC' }}>
             ＋ 구역
           </button>
         </div>
@@ -297,7 +297,7 @@ export default function AreaEfficiency({ data, updateData }) {
               )
             })}
 
-            <button className="btn" style={{ width: '100%', marginTop: 8, background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd' }}
+            <button className="btn" style={{ width: '100%', marginTop: 8, background: '#FDF2F4', color: '#A50034', border: '1px solid #E8C5CC' }}
               onClick={() => addItem(safeActiveZone)}>＋ 적재 항목 추가</button>
 
             <div style={{ height: 1, background: 'var(--color-card-border)', margin: '16px 0' }} />

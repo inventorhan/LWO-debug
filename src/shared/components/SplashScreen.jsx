@@ -55,10 +55,10 @@ export default function SplashScreen({ fadeMs = 400 }) {
           fontSize: '1.1rem',
           fontWeight: 800,
           color: 'white',
-          background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)',
+          background: 'linear-gradient(135deg, #C8113F 0%, #7A0026 100%)',
           border: '2px solid rgba(255,255,255,0.6)',
           borderRadius: 999,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(21,101,192,0.25)',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(165,0,52,0.25)',
           cursor: 'pointer',
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
@@ -70,8 +70,8 @@ export default function SplashScreen({ fadeMs = 400 }) {
       </button>
       <style>{`
         @keyframes splashPulse {
-          0%, 100% { transform: scale(1);    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(21,101,192,0.25); }
-          50%      { transform: scale(1.06); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 12px rgba(21,101,192,0.35); }
+          0%, 100% { transform: scale(1);    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(165,0,52,0.25); }
+          50%      { transform: scale(1.06); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 12px rgba(165,0,52,0.35); }
         }
       `}</style>
     </div>

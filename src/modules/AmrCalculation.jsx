@@ -201,7 +201,7 @@ export default function AmrCalculation({ data, updateData }) {
                 : '—'}
             </span>
           </div>
-          <div className="result-box full-width" style={{ background: '#1e40af', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: '#A50034', padding: '14px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
               ⭐ AMR 필요 대수 = ⌈ 원단위 / 가동율 ⌉ + Spare
             </span>

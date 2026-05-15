@@ -144,7 +144,7 @@ export default function InventoryStorage({ data, updateData }) {
 
         <Divider label="기초 재고 산출" />
         <div className="input-grid">
-          <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#0f766e' : '#1e40af', padding: '14px 16px' }}>
+          <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#0f766e' : '#A50034', padding: '14px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
               일일 부족 수량 (기초 재고) = 고객 일일 − 자사 일일
               {shortageQty < 0 && ' · 잉여(자사 초과)'}
@@ -222,7 +222,7 @@ export default function InventoryStorage({ data, updateData }) {
             <span className="result-box__label">③ 고객사 운영 재고</span>
             <span className="result-box__value">{fmtN(customerOpsStock, '대', 0)}</span>
           </div>
-          <div className="result-box full-width" style={{ background: '#1e40af', padding: '18px 16px' }}>
+          <div className="result-box full-width" style={{ background: '#A50034', padding: '18px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
               ⭐ Total 최종 적정 재고 = ① + ② + ③
             </span>
