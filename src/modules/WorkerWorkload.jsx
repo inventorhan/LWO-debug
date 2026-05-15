@@ -253,7 +253,7 @@ export default function WorkerWorkload({
         <div className="section-title">측정 결과 <span className="sub-title">| 전체 누적 합산</span></div>
         <div className="input-grid">
           <div className="result-box">
-            <span className="result-box__label">총 운반 시간 (피킹+이동+로딩+회수)</span>
+            <span className="result-box__label">총 운반 시간 (피킹+이동+로딩/언로딩+회수)</span>
             <span className="result-box__value">{totalTransportSec.toFixed(1)}초</span>
           </div>
           <div className="result-box tone-blue">
@@ -333,14 +333,22 @@ export default function WorkerWorkload({
         ))}
 
         <div className="input-grid" style={{ marginTop: 12, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
-          <button className="btn" style={{ background: COLORS.pick, color: 'white', fontSize: '0.85rem' }}
-            onClick={() => activeCycleId && addCardInCycle(activeCycleId, 'pick')}>+ 피킹</button>
-          <button className="btn" style={{ background: COLORS.move, color: 'white', fontSize: '0.85rem' }}
-            onClick={() => activeCycleId && addCardInCycle(activeCycleId, 'move')}>+ 이동</button>
-          <button className="btn" style={{ background: COLORS.load, color: 'white', fontSize: '0.78rem' }}
-            onClick={() => activeCycleId && addCardInCycle(activeCycleId, 'load')}>+ 로딩</button>
-          <button className="btn" style={{ background: COLORS.recovery, color: 'white', fontSize: '0.85rem' }}
-            onClick={() => activeCycleId && addCardInCycle(activeCycleId, 'recovery')}>+ 회수</button>
+          {[
+            { type: 'pick',     label: '+ 피킹',       bg: COLORS.pick     },
+            { type: 'move',     label: '+ 이동',       bg: COLORS.move     },
+            { type: 'load',     label: '+ 로딩/언로딩', bg: COLORS.load     },
+            { type: 'recovery', label: '+ 회수',       bg: COLORS.recovery }
+          ].map(b => (
+            <button key={b.type} className="btn" style={{
+              background: b.bg, color: 'white',
+              fontSize: '0.72rem', fontWeight: 700,
+              lineHeight: 1.15, whiteSpace: 'normal', wordBreak: 'keep-all',
+              padding: '4px 4px', height: 'auto', minHeight: 44, textAlign: 'center'
+            }}
+              onClick={() => activeCycleId && addCardInCycle(activeCycleId, b.type)}>
+              {b.label}
+            </button>
+          ))}
         </div>
       </div>
 
