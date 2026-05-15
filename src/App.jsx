@@ -8,6 +8,7 @@ import AmrCalculation from './modules/AmrCalculation'
 import { exportToExcel } from './shared/utils/excelExport'
 import { saveJson } from './shared/utils/saveAndShare'
 import SplashScreen from './shared/components/SplashScreen'
+import HelpModal from './shared/components/HelpModal'
 
 const TABS = [
   { id: 'worker',    label: '작업자 부하율', short: '작업자', icon: '👷' },
@@ -31,6 +32,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('worker')
   const [toast, setToast] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
   const toastTimer = useRef(null)
 
   const showToast = (msg) => {
@@ -194,12 +196,17 @@ export default function App() {
             style={{ background: 'rgba(211,47,47,0.85)', borderColor: 'rgba(255,255,255,0.5)' }}>
             <span>📊</span><span className="hide-sm">엑셀</span>
           </button>
+          <button className="header-btn" onClick={() => setHelpOpen(true)} title="사용 설명서 열기">
+            <span>📖</span><span className="hide-sm">설명서</span>
+          </button>
           <button className="header-btn" onClick={handleReset} title="모든 입력 초기화"
             style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.2)' }}>
             <span>🔄</span>
           </button>
         </div>
       </header>
+
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       <main className="app-content">
         <div className="module-wrap">
