@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { fileToBase64, calcArea } from '../shared/utils/common'
+import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
 
 const LOAD_TYPES = ['박스', '파렛트', '대차', 'Rack', '기타']
 /* 체적 가중치 select 옵션 */
@@ -119,7 +120,17 @@ export default function AreaEfficiency({ data, updateData }) {
 
       {/* 공장 면적 */}
       <div className="section-card">
-        <div className="section-title">공장 면적 입력</div>
+        <div className="section-title">
+          공장 면적 입력
+          <HelpHint title="공장 면적 입력">
+            <p>분석 대상 <b>공장 전체</b>의 외곽 치수를 입력합니다. 모든 단위는 <b>미터(m)</b>.</p>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li>가로 / 세로 입력 → 공장 면적 자동 산출</li>
+              <li>공장 사진은 선택 항목 (전경 또는 도면)</li>
+            </ul>
+            <HintNote>이 값은 아래 구역별 효율 분석의 분모(공장 전체 면적)로 사용됩니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <span className="input-label">가로 (m)</span>
@@ -161,7 +172,19 @@ export default function AreaEfficiency({ data, updateData }) {
       {/* 구역 */}
       <div className="section-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-          <span className="section-title" style={{ marginBottom: 0, border: 'none', padding: 0 }}>구역 면적 입력</span>
+          <span className="section-title" style={{ marginBottom: 0, border: 'none', padding: 0 }}>
+            구역 면적 입력
+            <HelpHint title="구역 면적 입력">
+              <p>공장을 <b>여러 구역</b>으로 나눠 각 구역의 면적과 적재물을 따로 분석합니다.</p>
+              <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+                <li>상단 탭에서 구역 선택 → + 구역 버튼으로 추가</li>
+                <li>각 구역 가로/세로 (m) 입력 → 구역 면적 자동 산출</li>
+                <li><b>실사용 적재 면적 분석</b>에서 박스/파렛트/대차 등을 등록</li>
+                <li>각 적재 항목별로 최저/최고 높이까지 입력해 체적 효율도 측정</li>
+              </ul>
+              <HintNote>구역 단위로 세분화할수록 어느 구역이 비효율적인지 정확히 찾을 수 있습니다.</HintNote>
+            </HelpHint>
+          </span>
           {zones.length > 1 && curZone && (
             <button className="btn" onClick={() => removeZone(safeActiveZone)}
               style={{ height: 30, padding: '0 10px', background: '#FEF3C7', color: '#B45309', fontSize: '0.75rem' }}>
@@ -333,7 +356,21 @@ export default function AreaEfficiency({ data, updateData }) {
         const maxEff = Math.max(1, ...zoneStats.map(z => z.eff || 0))
         return (
           <div className="section-card" style={{ background: '#2A1F24', borderColor: '#3A2F33', color: 'white' }}>
-            <div className="section-title" style={{ color: 'white', borderBottomColor: '#4A4045' }}>📊 구역별 면적 효율 분석</div>
+            <div className="section-title" style={{ color: 'white', borderBottomColor: '#4A4045' }}>
+              📊 구역별 면적 효율 분석
+              <HelpHint title="구역별 면적 효율 분석">
+                <p>모든 구역의 효율을 한 화면에서 비교하는 결과 영역입니다.</p>
+                <HintFormula>{`면적 효율(%)    = 실사용 면적 ÷ 구역 면적 × 100
+체적 손실율(%) = ((최고−최저) ÷ 최고) × 가중치(%)
+평균 체적 사용율 = ((최고−손실) ÷ 최고) 항목 평균`}</HintFormula>
+                <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+                  <li>막대그래프: 각 구역의 효율(%) — 색상으로 강도 표시</li>
+                  <li>카드: 실제 사용 면적 / 구역 전체 면적</li>
+                  <li>하단: 공장 전체 면적</li>
+                </ul>
+                <HintNote type="warn">90% 초과 = 포화(통로 부족 가능). 50% 미만 = 활용 저조 → 재배치 검토.</HintNote>
+              </HelpHint>
+            </div>
 
             {/* 그래프 */}
             {zoneStats.some(z => z.eff !== null) && (

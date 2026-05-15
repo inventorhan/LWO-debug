@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { n, fmtN } from '../shared/utils/common'
+import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
 
 const RATE_OPTIONS = [0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
@@ -51,7 +52,21 @@ export default function AmrCalculation({ data, updateData }) {
 
       {/* 1) 생산 수량 정보 */}
       <div className="section-card">
-        <div className="section-title">생산 수량 정보</div>
+        <div className="section-title">
+          생산 수량 정보
+          <HelpHint title="생산 수량 정보">
+            <p>AMR이 1시간에 몇 번 왕복해야 하는지 결정하는 <b>기준 사이클</b>을 산출합니다.</p>
+            <HintFormula>{`UPH        = (3600 ÷ Tact) × 회수율
+운행 횟수   = UPH ÷ 장입 수량
+Cycle Time = 3600 ÷ 운행 횟수`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>Tact Time (초)</b>: 1개 생산 표준 시간</li>
+              <li><b>회수율 (%)</b>: 양품 비율 (예: 90)</li>
+              <li><b>장입 수량 (개/회)</b>: AMR 1회당 운반 가능 수</li>
+            </ul>
+            <HintNote>Cycle Time 안에 AMR이 한 번 왕복을 끝내야 합니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <div className="input-label-row"><span className="input-label">Tact Time (초)</span></div>
@@ -85,7 +100,20 @@ export default function AmrCalculation({ data, updateData }) {
 
       {/* 2) AMR 운행 산출 — 왕복거리 / 로딩 / 언로딩 그룹화 */}
       <div className="section-card">
-        <div className="section-title">AMR 운행 산출</div>
+        <div className="section-title">
+          AMR 운행 산출
+          <HelpHint title="AMR 운행 산출">
+            <p>AMR이 1회 왕복하는 데 걸리는 시간을 구성하는 <b>이동·로딩·언로딩</b> 시간을 입력합니다.</p>
+            <HintFormula>{`왕복 거리       = 편도 거리 × 2
+Total 로딩      = 로딩 횟수 × 시간
+Total 언로딩    = 언로딩 횟수 × 시간`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>AMR Speed (m/s)</b>: 기종 사양 (보통 1.0~2.0)</li>
+              <li><b>로딩/언로딩 횟수</b>: 1 사이클 내 발생 횟수 (다중 적재 시 &gt;1)</li>
+            </ul>
+            <HintNote>로딩·언로딩 시간은 AMR이 정지한 상태에서 소요되는 시간만 포함합니다.</HintNote>
+          </HelpHint>
+        </div>
 
         {/* AMR Speed + 이동거리 (나란히) */}
         <div className="input-grid">
@@ -155,7 +183,16 @@ export default function AmrCalculation({ data, updateData }) {
 
       {/* 3) AMR 왕복 이동 시간 산출 */}
       <div className="section-card">
-        <div className="section-title">AMR 총 왕복시간 산출 <span className="sub-title">| AMR Cycle Time</span></div>
+        <div className="section-title">
+          AMR 총 왕복시간 산출 <span className="sub-title">| AMR Cycle Time</span>
+          <HelpHint title="AMR 총 왕복시간 산출">
+            <p>위에서 입력한 거리·속도·로딩/언로딩 시간을 합산한 <b>실제 왕복 소요 시간</b>입니다.</p>
+            <HintFormula>{`총 왕복 시간(초) = (왕복 거리 ÷ Speed)
+                  + Total 로딩
+                  + Total 언로딩`}</HintFormula>
+            <HintNote type="warn">이 값이 Cycle Time보다 크면 AMR 1대로 부족 → 다음 섹션에서 필요 대수가 늘어납니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="result-box tone-blue full-width">
             <span className="result-box__label">총 왕복시간(초) = (왕복거리 / Speed) + 로딩언로딩</span>
@@ -170,7 +207,22 @@ export default function AmrCalculation({ data, updateData }) {
 
       {/* 4) 실제 AMR 필요 대수 — 가동률 select + Round-up + Spare */}
       <div className="section-card">
-        <div className="section-title">실제 AMR 필요 대수</div>
+        <div className="section-title">
+          실제 AMR 필요 대수
+          <HelpHint title="실제 AMR 필요 대수">
+            <p>가동율과 예비 대수를 반영한 <b>최종 도입 필요 대수</b>입니다.</p>
+            <HintFormula>{`원단위        = ⌈ 총 왕복시간 ÷ Cycle ⌉
+                (예: 1.2 → 2대)
+가동율 적용  = ⌈ 원단위 ÷ 가동율 ⌉
+                (충전·수리 등 시간 보정)
+필요 대수    = 가동율 적용 + Spare(예비)`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>AMR 가동율 (0~1)</b>: 1일 중 실제 가동 비율. 보통 0.8</li>
+              <li><b>Spare</b>: 갑작스러운 고장 대비 (보통 1)</li>
+            </ul>
+            <HintNote type="ok">⌈ ⌉ 는 올림(ceiling) — 소수는 무조건 다음 정수로 올라갑니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <div className="input-label-row"><span className="input-label">AMR 가동율 (0~1)</span></div>

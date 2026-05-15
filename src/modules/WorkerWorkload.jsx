@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { getGap } from '../shared/utils/common'
 import TimerSection from '../shared/components/TimerSection'
 import PhotoSection from '../shared/components/PhotoSection'
+import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
 
 const CARD_TITLES = {
   pick:     '자재 피킹',
@@ -188,7 +189,19 @@ export default function WorkerWorkload({
 
       {/* 기초 정보 */}
       <div className="section-card">
-        <div className="section-title">기초 정보 입력</div>
+        <div className="section-title">
+          기초 정보 입력
+          <HelpHint title="기초 정보 입력">
+            <p>측정할 작업자의 <b>기본 조건</b>을 설정하는 곳입니다.</p>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>운반 종류</b>: 도보·대차·파렛트·AGV 등. 종류별 표준 속도가 자동 입력됩니다.</li>
+              <li><b>운반 수량</b>: 1회 이동 시 운반하는 자재 수</li>
+              <li><b>운반 속도</b>: 자동 입력. '기타' 선택 시 직접 입력 가능</li>
+              <li><b>부하 가중치 (0~1)</b>: 1시간 중 실제 작업 비율. 보통 0.8 (= 80% 가동)</li>
+            </ul>
+            <HintNote>측정 전에 반드시 가중치를 정해두세요. 결과의 부하율 계산 기준입니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <div className="input-label-row">
@@ -250,7 +263,22 @@ export default function WorkerWorkload({
 
       {/* 측정 결과 (누적 합산) */}
       <div className="section-card">
-        <div className="section-title">측정 결과 <span className="sub-title">| 전체 누적 합산</span></div>
+        <div className="section-title">
+          측정 결과 <span className="sub-title">| 전체 누적 합산</span>
+          <HelpHint title="측정 결과">
+            <p>모든 회차의 시간 데이터를 합산해 자동으로 산출되는 결과입니다.</p>
+            <HintFormula>{`총 운반 시간 = Σ (피킹+이동+로딩/언로딩+회수) Gap
+부하 가중 시간 = 3600초 × 가중치
+물류 부하율(%) = 총 운반 시간 ÷ 가중 시간 × 100`}</HintFormula>
+            <p><b>판정 기준</b>:</p>
+            <ul style={{ paddingLeft: 18, margin: '4px 0' }}>
+              <li>~70% (녹색): 여유</li>
+              <li>70~90% (앰버): 적정</li>
+              <li>90% 초과 (짙은 앰버): 과부하 → 인원 추가 / 동선 단축 검토</li>
+            </ul>
+            <HintNote type="ok">3~5회 측정 후 안정된 평균값을 사용하세요.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="result-box">
             <span className="result-box__label">총 운반 시간 (피킹+이동+로딩/언로딩+회수)</span>
@@ -276,6 +304,18 @@ export default function WorkerWorkload({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
           <div className="section-title" style={{ marginBottom: 0, border: 'none', paddingBottom: 0 }}>
             측정 내역 <span className="sub-title">| {measurements.length}회 중 {activeIndex || 0}회차</span>
+            <HelpHint title="측정 내역">
+              <p>한 사이클을 <b>4단계</b>로 나눠 측정하는 스톱워치 영역입니다.</p>
+              <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+                <li><b>① 피킹</b>: 자재를 집어 운반구에 싣는 시간 + 자재 종수</li>
+                <li><b>② 이동</b>: 목적지까지의 이동 시간 (공정 번호 선택)</li>
+                <li><b>③ 로딩/언로딩</b>: 도착 후 짐을 내리거나 다시 싣는 시간</li>
+                <li><b>④ 회수</b>: 빈 운반구로 출발지점 복귀</li>
+              </ul>
+              <p>각 카드에서 <b>▶ 시작</b> → 작업 → <b>⏹ 종료</b> 순서로 누르면 Gap 시간이 자동 기록됩니다.</p>
+              <HintNote>같은 사이클을 3~5회 반복 측정하려면 상단 <b>+</b> 탭을 눌러 회차를 추가하세요.</HintNote>
+              <HintNote type="warn">회차 삭제 시 해당 회차의 모든 카드 데이터가 함께 삭제됩니다.</HintNote>
+            </HelpHint>
           </div>
           {measurements.length > 1 && (
             <button className="btn" onClick={() => handleDeleteCycle(activeCycleId)}

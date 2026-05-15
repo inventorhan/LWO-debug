@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { getGap } from '../shared/utils/common'
 import TimerSection from '../shared/components/TimerSection'
 import PhotoSection from '../shared/components/PhotoSection'
+import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
 
 const CARD_TITLES = {
   load:     'E/V 로딩',
@@ -127,7 +128,17 @@ export default function ElevatorWorkload({
 
       {/* 기초 정보 */}
       <div className="section-card">
-        <div className="section-title">{activeHogi}호기 — 기초 정보</div>
+        <div className="section-title">
+          {activeHogi}호기 — 기초 정보
+          <HelpHint title="기초 정보 입력">
+            <p>선택한 호기의 <b>물리적 치수</b>와 <b>사진</b>을 기록합니다.</p>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>E/V 가로/세로 (m)</b>: 카(케이지) 내부 치수. 예: 2.2 × 1.5 → 면적 3.3 m²</li>
+              <li><b>호기 적재 사진</b>: 실제 적재 상태를 기록 (선택)</li>
+            </ul>
+            <HintNote>치수는 케이지 <b>내부 유효 공간</b> 기준으로 입력하세요 (벽체 두께 제외).</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <div className="input-label-row"><span className="input-label">E/V 가로 (m)</span></div>
@@ -147,7 +158,18 @@ export default function ElevatorWorkload({
 
       {/* E/V 적재율 자동 계산 */}
       <div className="section-card">
-        <div className="section-title">E/V 적재율 자동 계산</div>
+        <div className="section-title">
+          E/V 적재율 자동 계산
+          <HelpHint title="E/V 적재율">
+            <p>케이지 면적 대비 실제로 사용된 적재 면적의 비율입니다.</p>
+            <HintFormula>{`E/V 면적     = 가로 × 세로                        [m²]
+실 적재 면적 = Σ (가로 × 세로 × 개수)              [m²]
+적재율(%)    = 실 적재 ÷ E/V 면적 × 0.9 × 100
+              ※ 0.9 = 통로 / 여유 보정 계수`}</HintFormula>
+            <p>아래 <b>실 적재 항목 입력</b>에서 박스/대차/파렛트/손수레 등 종류와 개수, 치수를 추가하세요.</p>
+            <HintNote type="warn">100% 가까이 차면 운행 안전성에 영향이 있을 수 있습니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="result-box tone-slate">
             <span className="result-box__label">E/V 면적 = 가로 × 세로</span>
@@ -210,7 +232,17 @@ export default function ElevatorWorkload({
 
       {/* 측정 결과 (누적 합산) */}
       <div className="section-card">
-        <div className="section-title">측정 결과 <span className="sub-title">| 누적 합산 ({measurements.length}회)</span></div>
+        <div className="section-title">
+          측정 결과 <span className="sub-title">| 누적 합산 ({measurements.length}회)</span>
+          <HelpHint title="측정 결과">
+            <p>해당 호기의 모든 회차 측정값을 합산해 자동 산출됩니다.</p>
+            <HintFormula>{`총 운반 시간 = Σ (로딩+이동+언로딩+회수)
+부하 가중치 (0.5~1.0) 선택 가능
+부하율(%) = 총 운반 시간 ÷ (3600 × 가중치) × 100`}</HintFormula>
+            <p><b>판정 기준</b>: ~70% 여유 / 70~90% 적정 / 90% 초과 과부하</p>
+            <HintNote type="ok">가중치 셀렉터를 즉시 조정해 다양한 시나리오의 부하율을 비교할 수 있습니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="input-group full-width">
             <div className="input-label-row"><span className="input-label">E/V 부하 가중치 (0~1)</span></div>
@@ -243,6 +275,17 @@ export default function ElevatorWorkload({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
           <div className="section-title" style={{ marginBottom: 0, border: 'none', paddingBottom: 0 }}>
             측정 내역 <span className="sub-title">| {measurements.length}회 중 {activeIndex || 0}회차</span>
+            <HelpHint title="측정 내역">
+              <p>한 사이클을 4단계로 측정합니다.</p>
+              <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+                <li><b>① 로딩</b>: E/V 안에 짐을 싣는 시간 + 자재 종수</li>
+                <li><b>② 이동</b>: 층간 이동 시간 (1~10층 선택)</li>
+                <li><b>③ 언로딩</b>: 도착 층에서 짐을 내리는 시간 (공정 번호)</li>
+                <li><b>④ 회수</b>: 빈 차로 출발 층 복귀</li>
+              </ul>
+              <p>▶ 시작 → 작업 → ⏹ 종료. + 탭으로 다음 회차 추가.</p>
+              <HintNote>9호기까지 각각 독립 측정 가능. 호기를 바꿔도 데이터는 보존됩니다.</HintNote>
+            </HelpHint>
           </div>
           {measurements.length > 1 && (
             <button className="btn" onClick={() => handleDeleteCycle(effectiveCycleId)}

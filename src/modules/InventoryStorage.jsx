@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { n, fmtN } from '../shared/utils/common'
+import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
 
 /* 섹션 내 입력↔결과 사이 구분선 */
 const Divider = ({ label }) => (
@@ -66,7 +67,21 @@ export default function InventoryStorage({ data, updateData }) {
 
       {/* ── 1. 자사 기초 재고 ── */}
       <div className="section-card">
-        <div className="section-title">자사 기초 재고</div>
+        <div className="section-title">
+          자사 기초 재고
+          <HelpHint title="자사 기초 재고">
+            <p>고객사 요구량 대비 자사 생산량이 얼마나 <b>부족한지</b>를 산출하는 첫 단계입니다.</p>
+            <HintFormula>{`고객 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
+자사 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
+부족 수량 = 고객 일일 − 자사 일일
+            (양수 → 부족, 음수 → 잉여)`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>UPH</b>: 시간당 생산 수량 (Units Per Hour)</li>
+              <li>주간/야간 모두 운영하지 않으면 해당 시간을 <b>0</b>으로 두세요</li>
+            </ul>
+            <HintNote type="ok">결과가 음수(잉여)면 박스가 녹색으로 표시됩니다.</HintNote>
+          </HelpHint>
+        </div>
 
         <div className="inv-section-label">📥 고객 라인</div>
         <div className="input-grid">
@@ -156,7 +171,22 @@ export default function InventoryStorage({ data, updateData }) {
 
       {/* ── 2. 운반 리드타임 ── */}
       <div className="section-card">
-        <div className="section-title">운반 리드타임 → 수량 환산 <span className="sub-title">| 고객 UPH 기준</span></div>
+        <div className="section-title">
+          운반 리드타임 → 수량 환산 <span className="sub-title">| 고객 UPH 기준</span>
+          <HelpHint title="운반 리드타임 → 수량 환산">
+            <p>자사에서 출하 후 고객사 입고까지의 <b>대기·이동 시간</b>을 수량으로 환산해 재고에 더합니다.</p>
+            <HintFormula>{`수량 = (시간초 ÷ 3600) × 고객 주간 UPH
+
+리드타임 재고 = 숙성 + 안심 + 상차 + 이동`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>숙성 시간</b>: 자사 보관 / 품질 안정화 시간</li>
+              <li><b>안심 재고 (정책성)</b>: 운반 사고·설비 고장·차량 수배 대비</li>
+              <li><b>Depot ~ 상차</b>: 출하 대기 + 상차 시간</li>
+              <li><b>자사 ~ 고객 이동</b>: 운송 시간</li>
+            </ul>
+            <HintNote>모든 시간 입력 단위는 <b>초(sec)</b>입니다. 1시간 = 3600초.</HintNote>
+          </HelpHint>
+        </div>
         <div className="inv-section-label">📥 입력 + 자동 산출</div>
         {leadRows.map((r) => (
           <div key={r.key} className="inv-lead-row">
@@ -182,7 +212,19 @@ export default function InventoryStorage({ data, updateData }) {
 
       {/* ── 3. 고객사 운영 재고 ── */}
       <div className="section-card">
-        <div className="section-title">고객사 운영 재고 <span className="sub-title">| 고객 UPH 기준</span></div>
+        <div className="section-title">
+          고객사 운영 재고 <span className="sub-title">| 고객 UPH 기준</span>
+          <HelpHint title="고객사 운영 재고">
+            <p>고객사 도착 후 조립 라인 투입 전까지 <b>현장에서 머무는 시간</b>을 수량화합니다.</p>
+            <HintFormula>{`고객사 운영 재고 = 하차 + 대기 + 안전 재고
+수량 = (시간초 ÷ 3600) × 고객 주간 UPH`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>Dock ~ Depot 하차</b>: 고객사 하역 시간</li>
+              <li><b>대기 시간</b>: 조립 라인 투입 전 보관 시간</li>
+              <li><b>고객 안전 재고</b>: 7대 로스(불량/대기/이동 등) 감안 추가 재고</li>
+            </ul>
+          </HelpHint>
+        </div>
         <div className="inv-section-label">📥 입력 + 자동 산출</div>
         {opsRows.map((r) => (
           <div key={r.key} className="inv-lead-row">
@@ -208,7 +250,18 @@ export default function InventoryStorage({ data, updateData }) {
 
       {/* ── 4. 최종 적정 재고 ── */}
       <div className="section-card">
-        <div className="section-title">최종 적정 재고</div>
+        <div className="section-title">
+          최종 적정 재고
+          <HelpHint title="최종 적정 재고">
+            <p>위 3가지 결과를 모두 합한 <b>최종 권장 보관 수량</b>입니다.</p>
+            <HintFormula>{`Total 최종 적정 재고
+  = ① 일일 부족 수량
+  + ② 리드타임 재고
+  + ③ 고객사 운영 재고`}</HintFormula>
+            <HintNote type="ok">이 수치만큼 자사 창고에 항상 확보해두면 고객사 라인이 멈추지 않습니다.</HintNote>
+            <HintNote type="warn">잉여(자사 일일 &gt; 고객 일일) 상태에선 ① 항목이 음수이므로 최종값이 작아질 수 있습니다.</HintNote>
+          </HelpHint>
+        </div>
         <div className="input-grid">
           <div className="result-box tone-blue">
             <span className="result-box__label">① 일일 부족 수량</span>
