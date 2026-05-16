@@ -48,6 +48,15 @@ export default function InventoryStorage({ data, updateData }) {
   const finalStock = useMemo(() => shortageQty + leadTimeStock + customerOpsStock,
     [shortageQty, leadTimeStock, customerOpsStock])
 
+  /* ── 5. 적정 Space 산출 ── */
+  const spaceWidth   = n(f.spaceWidth)
+  const spaceDepth   = n(f.spaceDepth)
+  const spaceHeight  = n(f.spaceHeight) || 1   /* 높이(단) — 0이면 1로 보정 */
+  const spaceMargin  = n(f.spaceMargin) || 1   /* 여유율 — 0이면 1로 보정 */
+  const unitArea     = spaceWidth * spaceDepth                                            /* 1단 1개 면적 m² */
+  const baseArea     = unitArea * Math.max(0, finalStock) / spaceHeight                  /* 단 수 나눠 바닥 면적 */
+  const finalArea    = baseArea * spaceMargin                                             /* 여유율 적용 */
+
   const leadRows = [
     { key: 'ageingTime',         label: '숙성 시간 (초)',                 out: '숙성 수량',  outVal: ageingQty },
     { key: 'safetyStockTime',    label: '안심 재고 시간 (정책성, 초)',     out: '안심 수량',  outVal: safetyQty },
@@ -288,6 +297,63 @@ export default function InventoryStorage({ data, updateData }) {
           <div><strong>② 안심 재고</strong> : 운반 사고, 설비 고장 빈도수, 차량 수배 등등</div>
           <div><strong>③ 대기 시간</strong> : 고객사 조립 라인 투입 전 보관 수량</div>
           <div><strong>④ 고객 안전 재고</strong> : 7대 로스 감안 재고</div>
+        </div>
+      </div>
+
+      {/* ── 5. 적정 Space 산출 ── */}
+      <div className="section-card">
+        <div className="section-title">
+          적정 Space 산출
+          <HelpHint title="적정 Space 산출">
+            <p>최종 적정 재고를 <b>실제 창고 바닥 면적</b>으로 환산합니다.</p>
+            <HintFormula>{`1단 면적     = 가로 × 세로                      [m²]
+필요 바닥 면적 = 1단 면적 × 적정 재고 ÷ 높이(단)  [m²]
+최종 적정 면적 = 필요 바닥 면적 × 여유율          [m²]`}</HintFormula>
+            <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
+              <li><b>가로 / 세로 (m)</b>: 한 단위 적재물의 바닥 치수</li>
+              <li><b>높이 (단)</b>: 위로 몇 단까지 쌓을 수 있는지</li>
+              <li><b>여유율 (계수)</b>: 통로·안전 공간을 포함한 보정 (예: 1.2 = 20% 여유)</li>
+            </ul>
+            <HintNote>높이를 늘리면 바닥 면적이 줄고, 여유율을 늘리면 실제 필요 면적이 커집니다.</HintNote>
+          </HelpHint>
+        </div>
+        <div className="input-grid">
+          <div className="input-group">
+            <div className="input-label-row"><span className="input-label">가로 (m)</span></div>
+            <input className="input-field" type="number" step="0.1" min={0} value={f.spaceWidth || ''}
+              onChange={e => set('spaceWidth', e.target.value)} placeholder="예: 1.2" />
+          </div>
+          <div className="input-group">
+            <div className="input-label-row"><span className="input-label">세로 (m)</span></div>
+            <input className="input-field" type="number" step="0.1" min={0} value={f.spaceDepth || ''}
+              onChange={e => set('spaceDepth', e.target.value)} placeholder="예: 1.2" />
+          </div>
+          <div className="input-group">
+            <div className="input-label-row"><span className="input-label">높이 (단)</span></div>
+            <input className="input-field" type="number" step="1" min={1} value={f.spaceHeight || ''}
+              onChange={e => set('spaceHeight', e.target.value)} placeholder="예: 3" />
+          </div>
+          <div className="input-group">
+            <div className="input-label-row"><span className="input-label">여유율 (계수)</span></div>
+            <input className="input-field" type="number" step="0.1" min={1} value={f.spaceMargin || ''}
+              onChange={e => set('spaceMargin', e.target.value)} placeholder="예: 1.2" />
+          </div>
+          <div className="result-box tone-slate full-width">
+            <span className="result-box__label">1단 면적 (가로 × 세로)</span>
+            <span className="result-box__value">{unitArea > 0 ? `${unitArea.toFixed(2)} m²` : '—'}</span>
+          </div>
+          <div className="result-box tone-slate full-width">
+            <span className="result-box__label">필요 바닥 면적 (1단 × {fmtN(finalStock, '대', 0)} ÷ {spaceHeight}단)</span>
+            <span className="result-box__value">{baseArea > 0 ? `${baseArea.toFixed(2)} m²` : '—'}</span>
+          </div>
+          <div className="result-box full-width" style={{ background: '#A50034', padding: '18px 16px' }}>
+            <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
+              ⭐ 최종 적정 면적 = (가로 × 세로 × 적정 재고) ÷ 높이 × 여유율
+            </span>
+            <span className="result-box__value" style={{ fontSize: '1.7rem' }}>
+              {finalArea > 0 ? `${finalArea.toLocaleString(undefined, { maximumFractionDigits: 1 })} m²` : '—'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

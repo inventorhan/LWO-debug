@@ -85,7 +85,15 @@ export const initialState = {
     /* 운반 리드타임 */
     ageingTime: '', safetyStockTime: '', depotLoadTime: '', selfToCustomerTime: '',
     /* 고객사 운영 재고 */
-    customerDockTime: '', waitTime: '', customerSafetyTime: ''
+    customerDockTime: '', waitTime: '', customerSafetyTime: '',
+    /* 적정 Space 산출 */
+    spaceWidth: '', spaceDepth: '', spaceHeight: 3, spaceMargin: 1.2
+  },
+  inventoryStats: {
+    /* 실적 기준 적정 재고 (통계 분석) */
+    product: '',
+    model: '',
+    records: []   /* { id, date, production, shipment, stock } */
   },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
   savedAt: null,
@@ -181,8 +189,9 @@ export function useAppState() {
           },
           elevator:  { ...initialState.elevator, ...(migratedElevator || {}) },
           area:      { ...initialState.area, ...(migrateAreaUnit(parsed.area) || {}) },
-          inventory: { ...initialState.inventory, ...(parsed.inventory || {}) },
-          amr:       { ...initialState.amr, ...(parsed.amr || {}) }
+          inventory:      { ...initialState.inventory, ...(parsed.inventory || {}) },
+          inventoryStats: { ...initialState.inventoryStats, ...(parsed.inventoryStats || {}) },
+          amr:            { ...initialState.amr, ...(parsed.amr || {}) }
         })
       } catch {}
     }
@@ -485,6 +494,45 @@ export function useAppState() {
   const updateElevator  = useCallback(u => setState(s => ({ ...s, elevator: { ...s.elevator, ...u } })), [])
   const updateArea      = useCallback(u => setState(s => ({ ...s, area: { ...s.area, ...u } })), [])
   const updateInventory = useCallback(u => setState(s => ({ ...s, inventory: { ...s.inventory, ...u } })), [])
+
+  /* ── 재고 통계 (실적 기반) ── */
+  const updateInventoryStats = useCallback(u => setState(s => ({
+    ...s, inventoryStats: { ...s.inventoryStats, ...u }
+  })), [])
+
+  const addInvStatsRecord = useCallback(() => {
+    setState(s => {
+      const cur = s.inventoryStats || { records: [] }
+      const record = {
+        id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        date: '', production: '', shipment: '', stock: ''
+      }
+      return { ...s, inventoryStats: { ...cur, records: [...(cur.records || []), record] } }
+    })
+  }, [])
+
+  const updateInvStatsRecord = useCallback((id, upd) => {
+    setState(s => {
+      const cur = s.inventoryStats || { records: [] }
+      return {
+        ...s,
+        inventoryStats: {
+          ...cur,
+          records: (cur.records || []).map(r => r.id === id ? { ...r, ...upd } : r)
+        }
+      }
+    })
+  }, [])
+
+  const removeInvStatsRecord = useCallback((id) => {
+    setState(s => {
+      const cur = s.inventoryStats || { records: [] }
+      return {
+        ...s,
+        inventoryStats: { ...cur, records: (cur.records || []).filter(r => r.id !== id) }
+      }
+    })
+  }, [])
   const updateAmr       = useCallback(u => setState(s => ({ ...s, amr: { ...s.amr, ...u } })), [])
 
   const addCycle = useCallback(() => {
@@ -827,6 +875,8 @@ export function useAppState() {
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
     switchPersonnel,
     addTransportType, updateTransportType, removeTransportType,
+    /* 재고 통계 */
+    updateInventoryStats, addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord,
     /* E/V */
     switchHogi, removeHogi, updateElevatorHogi, updateElevatorBasic,
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,

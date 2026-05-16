@@ -4,6 +4,7 @@ import WorkerWorkload from './modules/WorkerWorkload'
 import ElevatorWorkload from './modules/ElevatorWorkload'
 import AreaEfficiency from './modules/AreaEfficiency'
 import InventoryStorage from './modules/InventoryStorage'
+import InventoryStatistics from './modules/InventoryStatistics'
 import AmrCalculation from './modules/AmrCalculation'
 import { exportToExcel } from './shared/utils/excelExport'
 import { saveJson } from './shared/utils/saveAndShare'
@@ -15,6 +16,7 @@ const TABS = [
   { id: 'elevator',  label: 'E/V 부하율',    short: 'E/V',    icon: '🛗' },
   { id: 'area',      label: '면적 효율',     short: '면적',   icon: '📐' },
   { id: 'inventory', label: '재고 보관량',   short: '재고',   icon: '📦' },
+  { id: 'invStats',  label: '실적 기준 재고', short: '실적', icon: '📈' },
   { id: 'amr',       label: 'AMR 대수',      short: 'AMR',    icon: '🤖' },
 ]
 
@@ -27,7 +29,8 @@ export default function App() {
     switchHogi, removeHogi, updateElevatorBasic,
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
     addElevatorCard, removeElevatorCard,
-    addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem
+    addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem,
+    updateInventoryStats, addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord
   } = useAppState()
 
   const [activeTab, setActiveTab] = useState('worker')
@@ -150,6 +153,14 @@ export default function App() {
         return <AreaEfficiency data={state.area} updateData={updateArea} />
       case 'inventory':
         return <InventoryStorage data={state.inventory} updateData={updateInventory} />
+      case 'invStats':
+        return <InventoryStatistics
+          data={state.inventoryStats}
+          updateData={updateInventoryStats}
+          addRecord={addInvStatsRecord}
+          updateRecord={updateInvStatsRecord}
+          removeRecord={removeInvStatsRecord}
+        />
       case 'amr':
         return <AmrCalculation data={state.amr} updateData={updateAmr} />
       default: return null
