@@ -92,12 +92,12 @@ export const initialState = {
   inventoryStats: {
     /* 실적 기준 적정 재고 (통계 분석) — 제품/모델별로 데이터 분리 */
     productList: ['세탁기'],
-    modelsByProduct: { '세탁기': ['Top Loader 4도어'] },
+    modelsByProduct: { '세탁기': ['Top Loader'] },
     activeProduct: '세탁기',
-    activeModel: 'Top Loader 4도어',
+    activeModel: 'Top Loader',
     /* '제품::모델' → { records: [{ id, date, production, shipment, stock }, ...] } */
     dataByKey: {
-      '세탁기::Top Loader 4도어': { records: [] }
+      '세탁기::Top Loader': { records: [] }
     }
   },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
@@ -200,7 +200,7 @@ export function useAppState() {
             /* v1.2.0 → v1.2.2 마이그레이션: 단일 records → dataByKey 구조 */
             if (parsed.inventoryStats && Array.isArray(parsed.inventoryStats.records)) {
               const p = parsed.inventoryStats.product || '세탁기'
-              const m = parsed.inventoryStats.model   || 'Top Loader 4도어'
+              const m = parsed.inventoryStats.model   || 'Top Loader'
               const key = `${p}::${m}`
               base.productList = base.productList?.includes(p) ? base.productList : [...(base.productList || []), p]
               base.modelsByProduct = {
