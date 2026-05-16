@@ -30,7 +30,11 @@ export default function App() {
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
     addElevatorCard, removeElevatorCard,
     addElevatorLoadItem, updateElevatorLoadItem, removeElevatorLoadItem,
-    updateInventoryStats, addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord
+    updateInventoryStats,
+    addInvProduct, removeInvProduct, renameInvProduct,
+    addInvModel, removeInvModel, renameInvModel,
+    setActiveInvProduct, setActiveInvModel,
+    addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord, clearInvStatsRecords
   } = useAppState()
 
   const [activeTab, setActiveTab] = useState('worker')
@@ -155,11 +159,21 @@ export default function App() {
         return <InventoryStorage data={state.inventory} updateData={updateInventory} />
       case 'invStats':
         return <InventoryStatistics
+          key={`${state.inventoryStats.activeProduct}::${state.inventoryStats.activeModel}`}
           data={state.inventoryStats}
           updateData={updateInventoryStats}
+          addProduct={addInvProduct}
+          removeProduct={removeInvProduct}
+          renameProduct={renameInvProduct}
+          addModel={addInvModel}
+          removeModel={removeInvModel}
+          renameModel={renameInvModel}
+          setActiveProduct={setActiveInvProduct}
+          setActiveModel={setActiveInvModel}
           addRecord={addInvStatsRecord}
           updateRecord={updateInvStatsRecord}
           removeRecord={removeInvStatsRecord}
+          clearRecords={clearInvStatsRecords}
         />
       case 'amr':
         return <AmrCalculation data={state.amr} updateData={updateAmr} />

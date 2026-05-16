@@ -392,6 +392,101 @@ export async function exportToExcel(state) {
     ['⭐ AMR 필요 대수(대)', need]
   ])
 
+  /* ─── 6. 실적 기준 적정 재고 (통계 분석) ─── */
+  const ws6 = workbook.addWorksheet('6.실적기준 재고')
+  ws6.columns = [
+    { header: '항목', key: 'k', width: 22 },
+    { header: '값',   key: 'v', width: 14 },
+    { header: '',     key: 'v2', width: 14 },
+    { header: '',     key: 'v3', width: 14 },
+    { header: '',     key: 'v4', width: 14 }
+  ]
+  styleHeaderRow(ws6.getRow(1))
+  const ivs = state.inventoryStats || {}
+  const productList = ivs.productList || []
+  const modelsByProduct = ivs.modelsByProduct || {}
+  const dataByKey = ivs.dataByKey || {}
+
+  /* 통계 헬퍼 */
+  const _avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+  const _std = (arr) => {
+    if (arr.length < 2) return 0
+    const m = _avg(arr)
+    return Math.sqrt(arr.reduce((a, v) => a + (v - m) ** 2, 0) / (arr.length - 1))
+  }
+
+  if (productList.length === 0) {
+    ws6.addRow(['(등록된 제품/모델 없음)'])
+  } else {
+    productList.forEach((p, pi) => {
+      const models = modelsByProduct[p] || []
+      if (pi > 0) ws6.addRow([])
+      applySubHeader(ws6.addRow([`■ 생산 제품: ${p}`]))
+
+      if (models.length === 0) {
+        ws6.addRow(['(등록된 모델 없음)'])
+        return
+      }
+
+      models.forEach((m) => {
+        const key = `${p}::${m}`
+        const records = (dataByKey[key]?.records) || []
+        ws6.addRow([])
+        applySubHeader(ws6.addRow([`▷ 모델: ${m}`]))
+
+        if (records.length === 0) {
+          ws6.addRow(['(데이터 없음)'])
+          return
+        }
+
+        /* 데이터 헤더 */
+        const hdr = ws6.addRow(['일자', '생산량', '출하량', '재고량', ''])
+        hdr.eachCell(c => c.style = labelStyle)
+
+        /* 일자별 행 */
+        records.forEach((r, idx) => {
+          ws6.addRow([
+            r.date || `${idx + 1}일`,
+            n(r.production),
+            n(r.shipment),
+            n(r.stock),
+            ''
+          ])
+        })
+
+        /* 통계 */
+        const prodA = records.map(r => n(r.production)).filter(v => v > 0)
+        const shipA = records.map(r => n(r.shipment)).filter(v => v > 0)
+        const stockA = records.map(r => n(r.stock)).filter(v => v > 0)
+
+        const stats = {
+          stockAvg: _avg(stockA), stockStd: _std(stockA),
+          stockMin: stockA.length ? Math.min(...stockA) : 0,
+          stockMax: stockA.length ? Math.max(...stockA) : 0,
+          shipAvg: _avg(shipA), shipStd: _std(shipA),
+          shipMin: shipA.length ? Math.min(...shipA) : 0,
+          shipMax: shipA.length ? Math.max(...shipA) : 0,
+          prodAvg: _avg(prodA)
+        }
+        const s999 = stats.shipAvg + stats.shipStd * 3.09
+        const s995 = stats.shipAvg + stats.shipStd * 2.575
+        const d999 = stats.shipAvg > 0 ? s999 / stats.shipAvg : 0
+        const d995 = stats.shipAvg > 0 ? s995 / stats.shipAvg : 0
+
+        ws6.addRow([])
+        ws6.addRow(['[통계]', '재고량', '출하량', '생산량', ''])
+        ws6.addRow(['평균', stats.stockAvg.toFixed(1), stats.shipAvg.toFixed(1), stats.prodAvg.toFixed(1), ''])
+        ws6.addRow(['표준편차', stats.stockStd.toFixed(1), stats.shipStd.toFixed(1), '', ''])
+        ws6.addRow(['Min', stats.stockMin, stats.shipMin, '', ''])
+        ws6.addRow(['Max', stats.stockMax, stats.shipMax, '', ''])
+        ws6.addRow([])
+        ws6.addRow(['[적정 재고]', '수량(대)', '재고 일수(일)', '', ''])
+        ws6.addRow(['99.9% 서비스율 (Z=3.09)', s999.toFixed(0), d999.toFixed(1), '', ''])
+        ws6.addRow(['99.5% 서비스율 (Z=2.575)', s995.toFixed(0), d995.toFixed(1), '', ''])
+      })
+    })
+  }
+
   const buffer = await workbook.xlsx.writeBuffer()
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const filename = `LWO_분석리포트_${ts}.xlsx`

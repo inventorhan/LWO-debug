@@ -90,10 +90,15 @@ export const initialState = {
     spaceWidth: '', spaceDepth: '', spaceHeight: 3, spaceMargin: 1.2
   },
   inventoryStats: {
-    /* 실적 기준 적정 재고 (통계 분석) */
-    product: '',
-    model: '',
-    records: []   /* { id, date, production, shipment, stock } */
+    /* 실적 기준 적정 재고 (통계 분석) — 제품/모델별로 데이터 분리 */
+    productList: ['세탁기'],
+    modelsByProduct: { '세탁기': ['Top Loader 4도어'] },
+    activeProduct: '세탁기',
+    activeModel: 'Top Loader 4도어',
+    /* '제품::모델' → { records: [{ id, date, production, shipment, stock }, ...] } */
+    dataByKey: {
+      '세탁기::Top Loader 4도어': { records: [] }
+    }
   },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
   savedAt: null,
@@ -190,7 +195,27 @@ export function useAppState() {
           elevator:  { ...initialState.elevator, ...(migratedElevator || {}) },
           area:      { ...initialState.area, ...(migrateAreaUnit(parsed.area) || {}) },
           inventory:      { ...initialState.inventory, ...(parsed.inventory || {}) },
-          inventoryStats: { ...initialState.inventoryStats, ...(parsed.inventoryStats || {}) },
+          inventoryStats: (() => {
+            const base = { ...initialState.inventoryStats, ...(parsed.inventoryStats || {}) }
+            /* v1.2.0 → v1.2.2 마이그레이션: 단일 records → dataByKey 구조 */
+            if (parsed.inventoryStats && Array.isArray(parsed.inventoryStats.records)) {
+              const p = parsed.inventoryStats.product || '세탁기'
+              const m = parsed.inventoryStats.model   || 'Top Loader 4도어'
+              const key = `${p}::${m}`
+              base.productList = base.productList?.includes(p) ? base.productList : [...(base.productList || []), p]
+              base.modelsByProduct = {
+                ...(base.modelsByProduct || {}),
+                [p]: [...new Set([...(base.modelsByProduct?.[p] || []), m])]
+              }
+              base.activeProduct = p
+              base.activeModel = m
+              base.dataByKey = { ...(base.dataByKey || {}), [key]: { records: parsed.inventoryStats.records } }
+              delete base.records
+              delete base.product
+              delete base.model
+            }
+            return base
+          })(),
           amr:            { ...initialState.amr, ...(parsed.amr || {}) }
         })
       } catch {}
@@ -495,44 +520,237 @@ export function useAppState() {
   const updateArea      = useCallback(u => setState(s => ({ ...s, area: { ...s.area, ...u } })), [])
   const updateInventory = useCallback(u => setState(s => ({ ...s, inventory: { ...s.inventory, ...u } })), [])
 
-  /* ── 재고 통계 (실적 기반) ── */
+  /* ── 재고 통계 (실적 기반) — 제품/모델별 분리 ── */
+  const invKey = (product, model) => `${product}::${model}`
+
   const updateInventoryStats = useCallback(u => setState(s => ({
     ...s, inventoryStats: { ...s.inventoryStats, ...u }
   })), [])
 
-  const addInvStatsRecord = useCallback(() => {
-    setState(s => {
-      const cur = s.inventoryStats || { records: [] }
-      const record = {
-        id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        date: '', production: '', shipment: '', stock: ''
+  /* 제품 관리 */
+  const addInvProduct = useCallback((name) => setState(s => {
+    const cur = s.inventoryStats
+    if (!name || cur.productList.includes(name)) return s
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        productList: [...cur.productList, name],
+        modelsByProduct: { ...cur.modelsByProduct, [name]: cur.modelsByProduct[name] || [] }
       }
-      return { ...s, inventoryStats: { ...cur, records: [...(cur.records || []), record] } }
-    })
-  }, [])
+    }
+  }), [])
 
-  const updateInvStatsRecord = useCallback((id, upd) => {
-    setState(s => {
-      const cur = s.inventoryStats || { records: [] }
+  const removeInvProduct = useCallback((name) => setState(s => {
+    const cur = s.inventoryStats
+    const nextList = cur.productList.filter(p => p !== name)
+    const nextModels = { ...cur.modelsByProduct }
+    const nextData = { ...cur.dataByKey }
+    /* 해당 제품의 모든 모델 데이터 삭제 */
+    ;(nextModels[name] || []).forEach(m => { delete nextData[invKey(name, m)] })
+    delete nextModels[name]
+    /* 활성 제품 보정 */
+    let nextActiveProduct = cur.activeProduct
+    let nextActiveModel = cur.activeModel
+    if (cur.activeProduct === name) {
+      nextActiveProduct = nextList[0] || ''
+      nextActiveModel = (nextModels[nextActiveProduct] || [])[0] || ''
+    }
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        productList: nextList,
+        modelsByProduct: nextModels,
+        dataByKey: nextData,
+        activeProduct: nextActiveProduct,
+        activeModel: nextActiveModel
+      }
+    }
+  }), [])
+
+  const renameInvProduct = useCallback((oldName, newName) => setState(s => {
+    const cur = s.inventoryStats
+    if (!newName || cur.productList.includes(newName) || oldName === newName) return s
+    const nextList = cur.productList.map(p => p === oldName ? newName : p)
+    const nextModels = { ...cur.modelsByProduct }
+    nextModels[newName] = nextModels[oldName] || []
+    delete nextModels[oldName]
+    const nextData = { ...cur.dataByKey }
+    ;(nextModels[newName] || []).forEach(m => {
+      const oldKey = invKey(oldName, m)
+      if (nextData[oldKey]) {
+        nextData[invKey(newName, m)] = nextData[oldKey]
+        delete nextData[oldKey]
+      }
+    })
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        productList: nextList,
+        modelsByProduct: nextModels,
+        dataByKey: nextData,
+        activeProduct: cur.activeProduct === oldName ? newName : cur.activeProduct
+      }
+    }
+  }), [])
+
+  /* 모델 관리 (현재 활성 제품 기준) */
+  const addInvModel = useCallback((modelName) => setState(s => {
+    const cur = s.inventoryStats
+    const p = cur.activeProduct
+    if (!p || !modelName) return s
+    const models = cur.modelsByProduct[p] || []
+    if (models.includes(modelName)) return s
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        modelsByProduct: { ...cur.modelsByProduct, [p]: [...models, modelName] }
+      }
+    }
+  }), [])
+
+  const removeInvModel = useCallback((modelName) => setState(s => {
+    const cur = s.inventoryStats
+    const p = cur.activeProduct
+    if (!p) return s
+    const models = (cur.modelsByProduct[p] || []).filter(m => m !== modelName)
+    const nextData = { ...cur.dataByKey }
+    delete nextData[invKey(p, modelName)]
+    let nextActiveModel = cur.activeModel
+    if (cur.activeModel === modelName) nextActiveModel = models[0] || ''
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        modelsByProduct: { ...cur.modelsByProduct, [p]: models },
+        dataByKey: nextData,
+        activeModel: nextActiveModel
+      }
+    }
+  }), [])
+
+  const renameInvModel = useCallback((oldName, newName) => setState(s => {
+    const cur = s.inventoryStats
+    const p = cur.activeProduct
+    if (!p || !newName || oldName === newName) return s
+    const models = cur.modelsByProduct[p] || []
+    if (models.includes(newName)) return s
+    const nextModels = { ...cur.modelsByProduct, [p]: models.map(m => m === oldName ? newName : m) }
+    const nextData = { ...cur.dataByKey }
+    const oldKey = invKey(p, oldName)
+    if (nextData[oldKey]) {
+      nextData[invKey(p, newName)] = nextData[oldKey]
+      delete nextData[oldKey]
+    }
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        modelsByProduct: nextModels,
+        dataByKey: nextData,
+        activeModel: cur.activeModel === oldName ? newName : cur.activeModel
+      }
+    }
+  }), [])
+
+  /* 활성 제품/모델 전환 (모델이 없으면 첫 번째로 자동 보정) */
+  const setActiveInvProduct = useCallback((p) => setState(s => {
+    const cur = s.inventoryStats
+    const models = cur.modelsByProduct[p] || []
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        activeProduct: p,
+        activeModel: models.includes(cur.activeModel) ? cur.activeModel : (models[0] || '')
+      }
+    }
+  }), [])
+
+  const setActiveInvModel = useCallback((m) => setState(s => ({
+    ...s, inventoryStats: { ...s.inventoryStats, activeModel: m }
+  })), [])
+
+  /* 일자별 레코드 — 현재 활성 (제품, 모델) 키에 작용 */
+  const _ensureKey = (s) => {
+    const cur = s.inventoryStats
+    const key = invKey(cur.activeProduct, cur.activeModel)
+    if (!cur.dataByKey[key]) {
       return {
         ...s,
         inventoryStats: {
           ...cur,
-          records: (cur.records || []).map(r => r.id === id ? { ...r, ...upd } : r)
+          dataByKey: { ...cur.dataByKey, [key]: { records: [] } }
         }
       }
-    })
-  }, [])
+    }
+    return s
+  }
 
-  const removeInvStatsRecord = useCallback((id) => {
-    setState(s => {
-      const cur = s.inventoryStats || { records: [] }
-      return {
-        ...s,
-        inventoryStats: { ...cur, records: (cur.records || []).filter(r => r.id !== id) }
+  const addInvStatsRecord = useCallback(() => setState(s => {
+    const safe = _ensureKey(s)
+    const cur = safe.inventoryStats
+    const key = invKey(cur.activeProduct, cur.activeModel)
+    const records = cur.dataByKey[key].records || []
+    const record = {
+      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      date: '', production: '', shipment: '', stock: ''
+    }
+    return {
+      ...safe,
+      inventoryStats: {
+        ...cur,
+        dataByKey: { ...cur.dataByKey, [key]: { ...cur.dataByKey[key], records: [...records, record] } }
       }
-    })
-  }, [])
+    }
+  }), [])
+
+  const updateInvStatsRecord = useCallback((id, upd) => setState(s => {
+    const cur = s.inventoryStats
+    const key = invKey(cur.activeProduct, cur.activeModel)
+    const records = cur.dataByKey[key]?.records || []
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        dataByKey: {
+          ...cur.dataByKey,
+          [key]: { ...(cur.dataByKey[key] || {}), records: records.map(r => r.id === id ? { ...r, ...upd } : r) }
+        }
+      }
+    }
+  }), [])
+
+  const removeInvStatsRecord = useCallback((id) => setState(s => {
+    const cur = s.inventoryStats
+    const key = invKey(cur.activeProduct, cur.activeModel)
+    const records = cur.dataByKey[key]?.records || []
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        dataByKey: {
+          ...cur.dataByKey,
+          [key]: { ...(cur.dataByKey[key] || {}), records: records.filter(r => r.id !== id) }
+        }
+      }
+    }
+  }), [])
+
+  const clearInvStatsRecords = useCallback(() => setState(s => {
+    const cur = s.inventoryStats
+    const key = invKey(cur.activeProduct, cur.activeModel)
+    return {
+      ...s,
+      inventoryStats: {
+        ...cur,
+        dataByKey: { ...cur.dataByKey, [key]: { ...(cur.dataByKey[key] || {}), records: [] } }
+      }
+    }
+  }), [])
   const updateAmr       = useCallback(u => setState(s => ({ ...s, amr: { ...s.amr, ...u } })), [])
 
   const addCycle = useCallback(() => {
@@ -876,7 +1094,11 @@ export function useAppState() {
     switchPersonnel,
     addTransportType, updateTransportType, removeTransportType,
     /* 재고 통계 */
-    updateInventoryStats, addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord,
+    updateInventoryStats,
+    addInvProduct, removeInvProduct, renameInvProduct,
+    addInvModel, removeInvModel, renameInvModel,
+    setActiveInvProduct, setActiveInvModel,
+    addInvStatsRecord, updateInvStatsRecord, removeInvStatsRecord, clearInvStatsRecords,
     /* E/V */
     switchHogi, removeHogi, updateElevatorHogi, updateElevatorBasic,
     addElevatorCycle, removeElevatorCycle, updateElevatorCycleCard,
