@@ -8,7 +8,9 @@
  *   node scripts/bump-version.mjs --minor    → versionName minor +1 (e.g. 1.0.0 → 1.1.0)
  *   node scripts/bump-version.mjs --major    → versionName major +1 (e.g. 1.0.0 → 2.0.0)
  *
- * 자동으로 android/app/build.gradle 의 versionCode/versionName 을 갱신합니다.
+ * 자동으로 다음 파일들의 버전을 갱신합니다:
+ *   - android/app/build.gradle  (versionCode + versionName)
+ *   - package.json              (version) — Electron 빌드용
  */
 
 import fs from 'node:fs';
@@ -17,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GRADLE = path.resolve(__dirname, '..', 'android', 'app', 'build.gradle');
+const PKG    = path.resolve(__dirname, '..', 'package.json');
 
 if (!fs.existsSync(GRADLE)) {
   console.error('✗ build.gradle 파일을 찾을 수 없습니다:', GRADLE);
@@ -56,11 +59,21 @@ src = src.replace(/versionName\s+"[^"]+"/, `versionName "${newName}"`);
 
 fs.writeFileSync(GRADLE, src, 'utf8');
 
+/* package.json version 동기화 (Electron 빌드용) */
+let oldPkgVer = '';
+if (fs.existsSync(PKG)) {
+  const pkg = JSON.parse(fs.readFileSync(PKG, 'utf8'));
+  oldPkgVer = pkg.version || '';
+  pkg.version = newName;
+  fs.writeFileSync(PKG, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+}
+
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('  ✅ 버전 업데이트 완료');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log(`  versionCode  ${oldCode}  →  ${newCode}`);
-console.log(`  versionName  ${oldName}  →  ${newName}`);
+console.log(`  versionCode    ${oldCode}  →  ${newCode}`);
+console.log(`  versionName    ${oldName}  →  ${newName}`);
+if (oldPkgVer) console.log(`  package.json   ${oldPkgVer}  →  ${newName}`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log();
 console.log('  다음 명령으로 릴리즈 빌드:');

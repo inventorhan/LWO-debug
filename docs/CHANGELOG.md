@@ -8,6 +8,21 @@ LWO 물류 분석 Tool의 주요 변경 사항을 버전별로 정리합니다.
 
 ---
 
+## v1.2.5 (2026-05-16)
+
+- ✨ **Windows EXE 배포 추가** (Electron 33 + electron-builder)
+  - 인스톨러: `LWO_V{버전}-Setup-windows.exe` (97 MB) — NSIS 기반, 데스크탑/시작메뉴 아이콘 자동 생성
+  - 포터블: `LWO_V{버전}-portable-windows.exe` (97 MB) — 설치 불필요, USB 실행 가능
+- 📦 신규 폴더: `electron/main.cjs` + `electron/preload.cjs`, `build/icon.png/.ico`
+- 📦 신규 npm 스크립트: `electron:dev`, `electron:build`, `electron:portable`
+- 📦 윈도우 아이콘: Android 192×192 → 멀티 사이즈 ICO (16~256) + 512 PNG 변환
+- 📖 문서 (README / PROJECT_STRUCTURE) 4가지 배포 형태로 업데이트
+
+## v1.2.4 (2026-05-16)
+
+- 🐛 `privacy.html` GitHub Pages 404 해결 — `docs/` → `public/`으로 이동
+- 📖 전체 문서 동기화 (CHANGELOG / PROJECT_STRUCTURE / README / HelpModal / manual.html) — 5개 → 6개 모듈 반영
+
 ## v1.2.3 (2026-05-16)
 
 - 🐛 기본 모델명을 `Top Loader 4도어` → `Top Loader`로 단순화

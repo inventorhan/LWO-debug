@@ -1,7 +1,10 @@
 {
   "name": "lwo-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.5",
+  "description": "LWO 물류 분석 Tool — 휴대폰/PC로 6가지 물류 KPI 측정·분석",
+  "author": "Haneol Lee",
+  "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +17,47 @@
     "bump:major": "node scripts/bump-version.mjs --major",
     "release:apk": "npm run build && npx cap copy android && cd android && gradlew assembleRelease",
     "release:aab": "npm run build && npx cap copy android && cd android && gradlew bundleRelease",
-    "deploy:pages": "npm run build && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','docs/index.html');fs.copyFileSync('dist/manual.html','docs/manual.html');fs.copyFileSync('dist/privacy.html','docs/privacy.html');fs.writeFileSync('docs/.nojekyll','')\""
+    "deploy:pages": "npm run build && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','docs/index.html');fs.copyFileSync('dist/manual.html','docs/manual.html');fs.copyFileSync('dist/privacy.html','docs/privacy.html');fs.writeFileSync('docs/.nojekyll','')\"",
+    "electron": "electron .",
+    "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder --win --x64",
+    "electron:portable": "npm run build && electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "com.inventorhan.lwo.desktop",
+    "productName": "LWO",
+    "copyright": "© 2026 LWO Project",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/**/*"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.cjs"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis",     "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "LWO_V${version}-${target}-windows.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LWO 물류 분석",
+      "artifactName": "LWO_V${version}-Setup-windows.${ext}"
+    },
+    "portable": {
+      "artifactName": "LWO_V${version}-portable-windows.${ext}"
+    }
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
@@ -32,6 +75,8 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

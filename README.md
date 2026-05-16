@@ -33,7 +33,7 @@
 - 💾 **JSON 저장/불러오기** — 측정 데이터 영구 보관
 - 📑 **Excel 내보내기** — 6개 모듈 전체를 한 파일로 (사진 포함)
 - 📖 **인라인 도움말** — 각 섹션 옆 `?` 버튼 + 풀스크린 종합 설명서
-- 🌐 **3가지 배포 형태** — Android 앱(APK/AAB) + 단일 HTML 파일 + GitHub Pages 호스팅
+- 🌐 **4가지 배포 형태** — Android 앱(APK/AAB) + Windows EXE(설치형/포터블) + 단일 HTML 파일 + GitHub Pages 호스팅
 
 ---
 
@@ -41,8 +41,9 @@
 
 ### 일반 사용자
 1. **웹**: https://inventorhan.github.io/LWO-debug/ 접속
-2. **Android 앱**: `LWO_V*.apk` 다운로드 후 폰에 설치
-3. **오프라인**: `LWO_V*-web.html` 파일을 폰/PC에 저장 후 더블클릭
+2. **Android 앱**: `LWO_V*-release.apk` 다운로드 후 폰에 설치
+3. **Windows 앱**: `LWO_V*-Setup-windows.exe` (설치형) 또는 `LWO_V*-portable-windows.exe` (USB 실행)
+4. **오프라인 단일 HTML**: `LWO_V*-web.html` 파일을 폰/PC에 저장 후 더블클릭
 
 ### 처음이라면
 📖 **[사용 설명서](https://inventorhan.github.io/LWO-debug/manual.html)** 를 먼저 보세요. 모듈별 절차 + 공식 + 계산 예시까지 정리되어 있습니다.
@@ -53,9 +54,10 @@
 
 ```
 React 19 + Vite 8 (단일 파일 빌드)
-└─ Capacitor 8 → Android APK / AAB
-└─ exceljs → 클라이언트 Excel 내보내기
-└─ GitHub Actions → GitHub Pages 자동 배포
+├─ Capacitor 8       → Android APK / AAB
+├─ Electron 33       → Windows EXE (설치형 / 포터블)
+├─ exceljs           → 클라이언트 Excel 내보내기
+└─ GitHub Actions    → GitHub Pages 자동 배포
 ```
 
 서버 / 백엔드 / 데이터베이스 없음. 완전한 **클라이언트 사이드 앱**.
@@ -106,6 +108,10 @@ npm run bump:minor   # 1.1.x → 1.2.0
 npx cap copy android
 cd android && ./gradlew assembleRelease    # APK
 cd android && ./gradlew bundleRelease      # AAB (Play Console)
+
+# Windows EXE 빌드
+npm run electron:build                     # Setup.exe + portable.exe (dist-electron/)
+npm run electron:dev                       # 개발 중 로컬 일렉트론 미리보기
 ```
 
 `main` 브랜치에 푸시하면 **GitHub Actions가 자동으로 GitHub Pages에 배포**합니다 (1~2분 소요).

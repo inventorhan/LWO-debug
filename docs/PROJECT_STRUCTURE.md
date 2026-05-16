@@ -2,7 +2,7 @@
 
 > 처음 보는 사람도 이 문서 하나로 프로젝트 전체를 이해할 수 있도록 작성한 종합 가이드입니다.
 >
-> **최종 갱신**: v1.2.3 (2026-05-16) · **저장소**: github.com/inventorhan/LWO-debug
+> **최종 갱신**: v1.2.5 (2026-05-16) · **저장소**: github.com/inventorhan/LWO-debug
 
 ---
 
@@ -28,13 +28,15 @@
 ### 한 줄 정의
 > **휴대폰 하나로 물류 현장의 6가지 KPI를 측정·계산·시각화하는 분석 도구**
 
-### 배포 형태 — 한 코드베이스 → 3가지 산출물
+### 배포 형태 — 한 코드베이스 → 4가지 산출물
 
 | 산출물 | 파일 | 용도 |
 |--------|------|------|
 | **Android APK** | `LWO_V{X}-release.apk` | 폰에 직접 설치 (사이드로드) |
 | **Android AAB** | `LWO_V{X}-release.aab` | Google Play Console 업로드 |
-| **Web (PWA)** | `LWO_V{X}-web.html` | 단일 HTML 파일, 어디서든 실행 |
+| **Windows 설치형** | `LWO_V{X}-Setup-windows.exe` | NSIS 인스톨러 (데스크탑 + 시작메뉴 아이콘) |
+| **Windows 포터블** | `LWO_V{X}-portable-windows.exe` | 설치 불필요, USB 실행 |
+| **Web 단일 HTML** | `LWO_V{X}-web.html` | 단일 HTML 파일, 어디서든 실행 |
 | **온라인 호스팅** | `inventorhan.github.io/LWO-debug/` | GitHub Pages 자동 배포 |
 | **교육용 매뉴얼** | `LWO_V{X}-manual.html` | 별도 HTML 가이드북 |
 
@@ -62,6 +64,8 @@
 | **Capacitor 8** (`@capacitor/core`, `@capacitor/android`) | 웹앱을 Android 네이티브로 래핑 |
 | **@capacitor/filesystem** | 네이티브 파일 저장 (Documents/LWO/) |
 | **@capacitor/share** | OS 공유 시트 (카톡/메일 등) |
+| **Electron 33** (devDep) | 웹앱을 Windows 데스크탑 앱으로 래핑 (Chromium 번들) |
+| **electron-builder 25** (devDep) | NSIS 인스톨러 + 포터블 EXE 생성, 멀티사이즈 아이콘 처리 |
 
 ### 데이터 처리
 | 라이브러리 | 역할 |
@@ -158,6 +162,19 @@ D:\Programs\LWO\
 │  │  ├─ settings.gradle
 │  │  ├─ variables.gradle            Android SDK 버전 등
 │  │  └─ capacitor-cordova-android-plugins\  Cordova 호환 레이어
+│  │
+│  ├─ electron\                       ★ Windows 데스크탑 래퍼 (Electron) ★
+│  │  ├─ main.cjs                     메인 프로세스 — BrowserWindow 생성, dist/index.html 로드
+│  │  └─ preload.cjs                  렌더러용 안전 브릿지 (contextBridge)
+│  │
+│  ├─ build\                          electron-builder 리소스
+│  │  ├─ icon.png                     512×512 데스크탑 아이콘
+│  │  └─ icon.ico                     멀티사이즈 ICO (16/24/32/48/64/96/128/256)
+│  │
+│  ├─ dist-electron\                  Windows 빌드 산출물 (.gitignore)
+│  │  ├─ LWO_V*-Setup-windows.exe     NSIS 인스톨러 (~97 MB)
+│  │  ├─ LWO_V*-portable-windows.exe  포터블 EXE (~97 MB)
+│  │  └─ win-unpacked\                압축 해제된 앱 디렉토리
 │  │
 │  ├─ scripts\
 │  │  └─ bump-version.mjs            ★ 버전 자동 증가 스크립트 ★
@@ -474,7 +491,11 @@ fileToBase64(file) // 파일 → base64 (압축 포함)
     "bump:major":     "node scripts/bump-version.mjs --major", // 1.0.0 → 2.0.0
     "release:apk":    "npm run build && npx cap copy android && cd android && gradlew assembleRelease",
     "release:aab":    "npm run build && npx cap copy android && cd android && gradlew bundleRelease",
-    "deploy:pages":   "npm run build + dist→docs 복사 (legacy 백업)"
+    "deploy:pages":   "npm run build + dist→docs 복사 (legacy 백업)",
+    "electron":       "electron .",
+    "electron:dev":   "electron .",                                  // 개발 미리보기
+    "electron:build": "npm run build && electron-builder --win --x64", // Setup + portable EXE
+    "electron:portable": "npm run build && electron-builder --win portable --x64"
   }
 }
 ```
