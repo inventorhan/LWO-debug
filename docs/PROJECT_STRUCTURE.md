@@ -2,7 +2,7 @@
 
 > 처음 보는 사람도 이 문서 하나로 프로젝트 전체를 이해할 수 있도록 작성한 종합 가이드입니다.
 >
-> **최종 갱신**: v1.1.12 (2026-05) · **저장소**: github.com/inventorhan/LWO-debug
+> **최종 갱신**: v1.2.3 (2026-05-16) · **저장소**: github.com/inventorhan/LWO-debug
 
 ---
 
@@ -13,7 +13,7 @@
 3. [폴더 구조 전체 트리](#3-폴더-구조-전체-트리)
 4. [핵심 파일별 상세 설명](#4-핵심-파일별-상세-설명)
 5. [데이터 흐름 (State Flow)](#5-데이터-흐름-state-flow)
-6. [5개 분석 모듈 구조](#6-5개-분석-모듈-구조)
+6. [6개 분석 모듈 구조](#6-6개-분석-모듈-구조)
 7. [공통 컴포넌트 / 유틸](#7-공통-컴포넌트--유틸)
 8. [스타일링 시스템](#8-스타일링-시스템)
 9. [빌드 및 배포 파이프라인](#9-빌드-및-배포-파이프라인)
@@ -26,7 +26,7 @@
 ## 1. 프로젝트 개요
 
 ### 한 줄 정의
-> **휴대폰 하나로 물류 현장의 5가지 KPI를 측정·계산·시각화하는 분석 도구**
+> **휴대폰 하나로 물류 현장의 6가지 KPI를 측정·계산·시각화하는 분석 도구**
 
 ### 배포 형태 — 한 코드베이스 → 3가지 산출물
 
@@ -98,11 +98,12 @@ D:\Programs\LWO\
 │  │  ├─ index.css                   전역 CSS + 디자인 토큰
 │  │  ├─ App.css                     App 컴포넌트 전용 (소량)
 │  │  │
-│  │  ├─ modules\                    5개 분석 모듈 (각 1 파일)
+│  │  ├─ modules\                    6개 분석 모듈 (각 1 파일)
 │  │  │  ├─ WorkerWorkload.jsx       👷 작업자 부하율
 │  │  │  ├─ ElevatorWorkload.jsx     🛗 E/V 부하율
 │  │  │  ├─ AreaEfficiency.jsx       📐 면적 효율
-│  │  │  ├─ InventoryStorage.jsx     📦 재고 보관량
+│  │  │  ├─ InventoryStorage.jsx     📦 재고 보관량 (+ 적정 Space)
+│  │  │  ├─ InventoryStatistics.jsx  📈 실적 기준 적정 재고 (통계)
 │  │  │  └─ AmrCalculation.jsx       🤖 AMR 대수
 │  │  │
 │  │  ├─ shared\                     재사용 컴포넌트 / 유틸
@@ -119,6 +120,7 @@ D:\Programs\LWO\
 │  │  │
 │  │  └─ assets\
 │  │     ├─ splash.jpg               스플래시 이미지 (LG 디지털 트윈)
+│  │     ├─ normal_distribution.png  정규분포 + Z표 (실적 재고 모듈)
 │  │     ├─ hero.png                 (legacy)
 │  │     ├─ react.svg
 │  │     └─ vite.svg
@@ -248,6 +250,15 @@ export function useAppState() {
   inventory: {         // 재고 보관량 — flat 객체 (한 세트)
     customerDayUph, customerDayTime, ...
     ageingTime, safetyStockTime, ...
+    spaceWidth, spaceDepth, spaceHeight, spaceMargin  // 적정 Space 산출
+  },
+  inventoryStats: {    // 실적 기준 적정 재고 — 제품/모델별 데이터 분리
+    productList: ['세탁기', ...],
+    modelsByProduct: { '세탁기': ['Top Loader', ...] },
+    activeProduct, activeModel,
+    dataByKey: {
+      '세탁기::Top Loader': { records: [{ id, date, production, shipment, stock }] }
+    }
   },
   amr: {               // AMR 대수 — flat 객체
     tactTime, recycleRate, ...
@@ -264,14 +275,16 @@ export function useAppState() {
 | **작업자** | `addPersonnel`, `removePersonnel`, `updatePersonnel`, `switchPersonnel`, `addCycle`, `removeCycle`, `updateCycleCard`, `addCardInCycle`, `removeCardInCycle` |
 | **운반종류** | `addTransportType`, `updateTransportType`, `removeTransportType` |
 | **E/V** | `switchHogi`, `removeHogi`, `updateElevatorBasic`, `addElevatorCycle`, `removeElevatorCycle`, `updateElevatorCycleCard`, `addElevatorCard`, `removeElevatorCard`, `addElevatorLoadItem`, `updateElevatorLoadItem`, `removeElevatorLoadItem` |
+| **재고 통계** | `updateInventoryStats`, `addInvProduct/removeInvProduct/renameInvProduct`, `addInvModel/removeInvModel/renameInvModel`, `setActiveInvProduct/setActiveInvModel`, `addInvStatsRecord/updateInvStatsRecord/removeInvStatsRecord`, `clearInvStatsRecords` |
 | **사진** | `addPhoto`, `removePhoto` (자동 base64 변환) |
 
 #### 4.3.3 데이터 마이그레이션
 
 오래된 localStorage 데이터를 새 버전 스키마로 자동 변환:
 - 면적 모듈 mm → m 단위 변환 (`migrateAreaUnit`)
-- E/V 모듈 mm → m 단위 변환 (이번 v1.1.4)
+- E/V 모듈 mm → m 단위 변환 (v1.1.4)
 - 단일 cards → dataByHogi 구조 마이그레이션
+- 재고 통계 단일 records[] → 제품/모델별 dataByKey 구조 (v1.2.2)
 
 ### 4.4 `src/index.css` — 디자인 시스템 (720줄)
 
@@ -342,7 +355,7 @@ const dailyProd = useMemo(() => n(f.uph) * n(f.time), [f.uph, f.time])
 
 ---
 
-## 6. 5개 분석 모듈 구조
+## 6. 6개 분석 모듈 구조
 
 각 모듈은 독립적이고 비슷한 패턴을 따릅니다.
 
@@ -380,7 +393,8 @@ export default function ModuleName({ data, updateData, ...액션들 }) {
 | **WorkerWorkload** | `WorkerWorkload.jsx` | 621 | 인원별 데이터 분리 (`dataByPersonnel`), 운반 종류 관리 모달, 인원별 비교 대시보드 |
 | **ElevatorWorkload** | `ElevatorWorkload.jsx` | 465 | 호기별 데이터 (`dataByHogi`), gap-fill 호기 번호, 호기별 비교 대시보드 |
 | **AreaEfficiency** | `AreaEfficiency.jsx` | 428 | 구역 배열 + 적재 항목 중첩, 막대그래프 시각화 |
-| **InventoryStorage** | `InventoryStorage.jsx` | 295 | flat 입력 → 4단계 자동 산출, 부호 표시 (잉여/부족) |
+| **InventoryStorage** | `InventoryStorage.jsx` | 340 | flat 입력 → 4단계 자동 산출, 부호 표시 (잉여/부족), **적정 Space 산출 카드** |
+| **InventoryStatistics** | `InventoryStatistics.jsx` | 480 | 제품/모델 dropdown + 관리 모달, 일별 입력 테이블, 추이 라인 차트(SVG), **99.9%/99.5% Z-기반 적정재고** |
 | **AmrCalculation** | `AmrCalculation.jsx` | 268 | 가장 단순. 3단계 산출 (UPH → Cycle → 대수) |
 
 ### 측정형 vs 산출형
