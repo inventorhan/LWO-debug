@@ -1,16 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { n, fmtN } from '../shared/utils/common'
 import HelpHint, { HintFormula, HintNote } from '../shared/components/HelpHint'
-
-/* 안전계수 Z 표 (국가직무능력표준) */
-const Z_TABLE = [
-  { rate: '90%',   z: 1.28 },
-  { rate: '95%',   z: 1.65 },
-  { rate: '98%',   z: 2.05 },
-  { rate: '99%',   z: 2.33 },
-  { rate: '99.5%', z: 2.575 },
-  { rate: '99.9%', z: 3.09  }
-]
+import normalCurveImg from '../assets/normal_distribution.png'
 
 /* 통계 함수 */
 const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
@@ -21,43 +12,22 @@ const stdev = (arr) => {
   return Math.sqrt(s)
 }
 
-/* 정규분포 + 안전재고 SVG 다이어그램 */
-const NormalCurveSVG = () => (
-  <svg viewBox="0 0 360 200" style={{ width: '100%', maxWidth: 360, height: 'auto', display: 'block', margin: '0 auto' }}>
-    <defs>
-      <linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"  stopColor="#A50034" stopOpacity="0.25" />
-        <stop offset="100%" stopColor="#A50034" stopOpacity="0.05" />
-      </linearGradient>
-      <linearGradient id="safetyFill" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stopColor="#A50034" stopOpacity="0.5" />
-        <stop offset="100%" stopColor="#A50034" stopOpacity="0.1" />
-      </linearGradient>
-    </defs>
-    {/* 곡선 */}
-    <path d="M 20,170 Q 80,170 110,140 Q 140,90 180,60 Q 220,90 250,140 Q 280,170 340,170 Z"
-      fill="url(#curveFill)" stroke="#A50034" strokeWidth="2" />
-    {/* 안전재고 영역 */}
-    <path d="M 220,170 Q 250,160 280,170 L 320,170 L 320,170 L 220,170 Z" fill="url(#safetyFill)" stroke="#6F0023" strokeWidth="1" />
-    {/* 평균(μ) */}
-    <line x1="180" y1="60" x2="180" y2="170" stroke="#2A1F24" strokeWidth="1.5" strokeDasharray="3,3" />
-    <text x="180" y="185" textAnchor="middle" fontSize="11" fontWeight="700" fill="#2A1F24">평균(μ)</text>
-    {/* Stock Out */}
-    <line x1="290" y1="50" x2="290" y2="170" stroke="#B45309" strokeWidth="1.5" strokeDasharray="3,3" />
-    <text x="290" y="45" textAnchor="middle" fontSize="10" fontWeight="700" fill="#B45309">Stock out</text>
-    <text x="290" y="185" textAnchor="middle" fontSize="10" fill="#B45309">←</text>
-    {/* 안전재고 라벨 */}
-    <text x="245" y="120" textAnchor="middle" fontSize="11" fontWeight="700" fill="#6F0023">안전재고</text>
-    <text x="245" y="133" textAnchor="middle" fontSize="11" fontWeight="700" fill="#6F0023">= Zσ</text>
-    {/* 서비스율 라벨 */}
-    <text x="180" y="20" textAnchor="middle" fontSize="11" fontWeight="700" fill="#A50034">서비스율</text>
-    <line x1="20" y1="30" x2="290" y2="30" stroke="#A50034" strokeWidth="1" markerEnd="url(#arr)" />
-    <defs>
-      <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-        <path d="M0,0 L6,3 L0,6 Z" fill="#A50034" />
-      </marker>
-    </defs>
-  </svg>
+/* 정규분포 + Z표 이미지 (PPT에서 추출, 그대로 표시) */
+const NormalCurveImage = () => (
+  <img
+    src={normalCurveImg}
+    alt="통계적 방법: 적정재고 = 입고량평균(μ) + 안전재고(Zσ) — 정규분포 + 안전계수(Z) 표"
+    style={{
+      width: '100%',
+      maxWidth: 520,
+      height: 'auto',
+      display: 'block',
+      margin: '0 auto',
+      borderRadius: 6,
+      userSelect: 'none'
+    }}
+    draggable={false}
+  />
 )
 
 export default function InventoryStatistics({ data, updateData, addRecord, updateRecord, removeRecord }) {
@@ -113,40 +83,10 @@ export default function InventoryStatistics({ data, updateData, addRecord, updat
           </HelpHint>
         </div>
 
-        <div style={{ background: '#FBF8F9', border: '1px solid #E5DCDF', borderRadius: 10, padding: 14, marginBottom: 12 }}>
-          <div style={{ fontWeight: 800, color: '#6F0023', marginBottom: 8, fontSize: '0.92rem' }}>
-            적정재고 = 입고량평균(μ) + 안전재고(Zσ)
-          </div>
-          <NormalCurveSVG />
-          <div style={{ fontSize: '0.78rem', color: '#7C6E74', textAlign: 'center', marginTop: 6 }}>
-            출처: 국가직무능력표준
-          </div>
+        <div style={{ background: 'white', border: '1px solid #E5DCDF', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+          <NormalCurveImage />
         </div>
-
-        <div className="inv-section-label">📊 안전계수 (Z) 표</div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ background: '#F4E1E7' }}>
-                <th style={{ padding: '8px', textAlign: 'left', color: '#6F0023', borderBottom: '2px solid #A50034' }}>정시 생산율(서비스율)</th>
-                {Z_TABLE.map(z => (
-                  <th key={z.rate} style={{ padding: '8px', textAlign: 'center', color: '#6F0023', borderBottom: '2px solid #A50034' }}>{z.rate}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: '8px', fontWeight: 700, color: '#2A1F24' }}>안전계수(Z)</td>
-                {Z_TABLE.map(z => (
-                  <td key={z.rate} style={{ padding: '8px', textAlign: 'center', color: '#4A4045', fontFamily: 'ui-monospace, monospace' }}>
-                    {z.z}
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#7C6E74' }}>
+        <div style={{ fontSize: '0.78rem', color: '#7C6E74' }}>
           ※ 본 모듈은 <b>99.9% (Z=3.09)</b> 및 <b>99.5% (Z=2.575)</b>를 자동 산출합니다.
         </div>
       </div>
