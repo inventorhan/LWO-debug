@@ -14,7 +14,7 @@
     "bump:major": "node scripts/bump-version.mjs --major",
     "release:apk": "npm run build && npx cap copy android && cd android && gradlew assembleRelease",
     "release:aab": "npm run build && npx cap copy android && cd android && gradlew bundleRelease",
-    "deploy:pages": "npm run build && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','docs/index.html');fs.copyFileSync('dist/manual.html','docs/manual.html');fs.writeFileSync('docs/.nojekyll','')\""
+    "deploy:pages": "npm run build && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','docs/index.html');fs.copyFileSync('dist/manual.html','docs/manual.html');fs.copyFileSync('dist/privacy.html','docs/privacy.html');fs.writeFileSync('docs/.nojekyll','')\""
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LWO 물류 분석 — 개인정보처리방침</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+         max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; color: #1e293b; line-height: 1.7; }
+  h1 { color: #0D47A1; font-size: 1.8rem; margin-bottom: 4px; }
+  h2 { color: #1565C0; font-size: 1.2rem; margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #BBDEFB; }
+  .meta { color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+  p, li { font-size: 0.95rem; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+  th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+  th { background: #f1f5f9; font-weight: 700; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+  .notice { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<h1>LWO 물류 분석 개인정보처리방침</h1>
+<p class="meta">시행일: 2026년 4월 30일 · 최종 수정일: 2026년 4월 30일</p>
+
+<p>본 개인정보처리방침은 <strong>LWO 물류 분석</strong>(이하 "본 앱")이 사용자의 개인정보를 어떻게 처리하는지를 안내하기 위해 작성되었습니다.</p>
+
+<h2>1. 수집·처리하는 정보</h2>
+<p>본 앱은 사용자의 개인정보를 외부 서버로 전송하거나 수집하지 않습니다. 본 앱이 사용하는 모든 데이터는 사용자의 기기 내부에서만 저장·처리됩니다.</p>
+
+<table>
+  <thead>
+    <tr><th>구분</th><th>처리 정보</th><th>저장 위치</th><th>처리 목적</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>측정 데이터</td>
+      <td>작업자 이름, 측정 시각, 운반 시간, 면적, AMR 산식 입력값 등</td>
+      <td>기기 내 <code>localStorage</code></td>
+      <td>물류 작업 분석 결과 산출 및 표시</td>
+    </tr>
+    <tr>
+      <td>사진</td>
+      <td>사용자가 직접 촬영하거나 선택한 운반/적재 사진</td>
+      <td>기기 내 <code>localStorage</code> (Base64)</td>
+      <td>측정 보조 자료 첨부</td>
+    </tr>
+    <tr>
+      <td>JSON / Excel 파일</td>
+      <td>사용자가 명시적으로 저장한 분석 결과 파일</td>
+      <td>사용자 기기 다운로드 폴더</td>
+      <td>분석 결과 내보내기 / 공유</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="notice">
+  <strong>중요:</strong> 위 정보는 사용자의 기기를 떠나지 않습니다. 개발자, Anthropic, Google 또는 어떤 제3자도 본 앱을 통해 사용자의 데이터에 접근할 수 없습니다.
+</div>
+
+<h2>2. 사용 권한 및 사용 사유</h2>
+<table>
+  <thead><tr><th>권한</th><th>사용 목적</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>android.permission.CAMERA</code></td>
+      <td>운반 작업·E/V 적재·구역 사진을 즉시 촬영하여 측정 카드에 첨부하기 위함</td>
+    </tr>
+    <tr>
+      <td><code>android.permission.READ_MEDIA_IMAGES</code><br>
+          <code>android.permission.READ_EXTERNAL_STORAGE</code></td>
+      <td>사용자가 갤러리에서 기존 사진을 선택하여 첨부하기 위함</td>
+    </tr>
+    <tr>
+      <td><code>android.permission.WRITE_EXTERNAL_STORAGE</code><br>(SDK 29 이하)</td>
+      <td>분석 결과 JSON·Excel 파일을 내보내기 위함</td>
+    </tr>
+    <tr>
+      <td><code>android.permission.INTERNET</code></td>
+      <td>WebView 기반 앱 구동을 위한 시스템 리소스 접근 (외부 통신은 수행하지 않음)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. 정보 보유 및 삭제</h2>
+<p>본 앱이 저장한 데이터는 다음 방법으로 즉시 삭제할 수 있습니다.</p>
+<ul>
+  <li>앱 헤더의 <strong>🔄 초기화</strong> 버튼을 눌러 모든 입력 데이터를 즉시 삭제</li>
+  <li>안드로이드 <em>설정 → 앱 → LWO 물류 분석 → 저장공간 → 데이터 삭제</em></li>
+  <li>앱을 제거하면 기기 내 모든 관련 데이터가 함께 삭제됩니다</li>
+</ul>
+
+<h2>4. 제3자 제공 및 광고</h2>
+<p>본 앱은 어떠한 제3자에게도 사용자의 정보를 제공하지 않으며, 광고 SDK를 포함하지 않습니다.</p>
+
+<h2>5. 아동 개인정보 보호</h2>
+<p>본 앱은 만 14세 미만 아동을 대상으로 하지 않으며, 아동의 개인정보를 의도적으로 수집하지 않습니다.</p>
+
+<h2>6. 보안</h2>
+<p>본 앱이 저장하는 모든 데이터는 사용자 기기의 운영체제가 제공하는 샌드박스 내에 보관됩니다. 사용자가 안드로이드 화면 잠금·생체 인증을 활성화하면 추가적인 보안 계층이 적용됩니다.</p>
+
+<h2>7. 정책 변경</h2>
+<p>본 방침이 변경될 경우 본 페이지에서 시행일과 함께 안내합니다. 중요한 변경이 있을 경우 앱 업데이트 시 출시 노트로 안내합니다.</p>
+
+<h2>8. 문의</h2>
+<p>개인정보 처리에 대한 문의는 다음으로 연락 주시기 바랍니다.</p>
+<ul>
+  <li>개발자: inventorhan</li>
+  <li>이메일: <a href="mailto:inventorhan@gmail.com">inventorhan@gmail.com</a></li>
+  <li>저장소: <a href="https://github.com/inventorhan/LWO-debug">github.com/inventorhan/LWO-debug</a></li>
+</ul>
+
+</body>
+</html>
