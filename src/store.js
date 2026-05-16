@@ -695,9 +695,23 @@ export function useAppState() {
     const cur = safe.inventoryStats
     const key = invKey(cur.activeProduct, cur.activeModel)
     const records = cur.dataByKey[key].records || []
+    /* 이전 행에 일자가 있으면 다음 날을 자동 채움 (YYYY-MM-DD) */
+    let nextDate = ''
+    const lastDate = records.length > 0 ? records[records.length - 1].date : ''
+    if (lastDate && /^\d{4}-\d{2}-\d{2}$/.test(lastDate)) {
+      const [y, m, d] = lastDate.split('-').map(Number)
+      const dt = new Date(y, m - 1, d)
+      if (!isNaN(dt.getTime())) {
+        dt.setDate(dt.getDate() + 1)
+        const yy = dt.getFullYear()
+        const mm = String(dt.getMonth() + 1).padStart(2, '0')
+        const dd = String(dt.getDate()).padStart(2, '0')
+        nextDate = `${yy}-${mm}-${dd}`
+      }
+    }
     const record = {
       id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      date: '', production: '', shipment: '', stock: ''
+      date: nextDate, production: '', shipment: '', stock: ''
     }
     return {
       ...safe,

@@ -1,7 +1,7 @@
 {
   "name": "lwo-app",
   "private": true,
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "LWO 물류 분석 Tool — 휴대폰/PC로 6가지 물류 KPI 측정·분석",
   "author": "Haneol Lee",
   "main": "electron/main.cjs",
@@ -40,8 +40,18 @@
     },
     "win": {
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.png",
       "artifactName": "LWO_V${version}-${target}-windows.${ext}"
