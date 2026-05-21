@@ -273,7 +273,8 @@ export async function exportToExcel(state) {
   const selfDayProd   = n(inv.selfDayUph)       * n(inv.selfDayTime)
   const selfNightProd = n(inv.selfNightUph)     * n(inv.selfNightTime)
   const selfDailyProd = selfDayProd + selfNightProd
-  const shortageQty   = Math.max(0, custDailyProd - selfDailyProd)
+  const shortageRaw   = custDailyProd - selfDailyProd
+  const shortageQty   = Math.abs(shortageRaw)
   const refUph = n(inv.customerDayUph)
 
   applySubHeader(ws4.addRow(['자사 기초 재고 — 고객 라인']))
@@ -296,7 +297,8 @@ export async function exportToExcel(state) {
     ['자사 주간 생산량(대)', selfDayProd.toFixed(0)],
     ['자사 야간 생산량(대)', selfNightProd.toFixed(0)],
     ['자사 일일 생산 수량(대)', selfDailyProd.toFixed(0)],
-    ['일일 부족 수량 (기초 재고, 대)', shortageQty.toFixed(0)]
+    ['일일 부족/잉여 차이(대)', shortageRaw.toFixed(0)],
+    ['일일 부족/잉여 절대값(대)', shortageQty.toFixed(0)]
   ])
   ws4.addRow([])
   applySubHeader(ws4.addRow(['운반 리드타임 → 수량 환산 (고객 UPH 기준)']))
@@ -335,10 +337,10 @@ export async function exportToExcel(state) {
   applySubHeader(ws4.addRow(['최종 적정 재고']))
   const finalStock = shortageQty + leadTimeStock + opsStock
   ws4.addRows([
-    ['① 일일 부족 수량(대)', shortageQty.toFixed(0)],
+    ['① 일일 부족/잉여 절대값(대)', shortageQty.toFixed(0)],
     ['② 리드타임 재고(대)', leadTimeStock.toFixed(0)],
     ['③ 고객사 운영 재고(대)', opsStock.toFixed(0)],
-    ['⭐ Total 최종 적정 재고(대) = ①+②+③', finalStock.toFixed(0)]
+    ['⭐ Total 최종 적정 재고(대) = ① 절대값+②+③', finalStock.toFixed(0)]
   ])
 
   /* ─── 5. AMR 산출 ─── */
@@ -486,6 +488,118 @@ export async function exportToExcel(state) {
       })
     })
   }
+
+  /* ─── 7. 물류 적정 인원 ─── */
+  const ws7 = workbook.addWorksheet('7.물류적정인원')
+  ws7.columns = [
+    { header: '항목', key: 'k', width: 36 },
+    { header: '값', key: 'v', width: 18 }
+  ]
+  styleHeaderRow(ws7.getRow(1))
+  const lp = state.logisticsPersonnel || {}
+  const lpPick = n(lp.pickTime)
+  const lpLoad = n(lp.loadTime)
+  const lpDistance = n(lp.distance)
+  const lpSpeed = n(lp.speed)
+  const lpHours = n(lp.hoursPerDay) || 8
+  const lpTripsPerHour = n(lp.tripsPerHour)
+  const lpAvailability = n(lp.availability) || 0.7
+  const lpWeight = n(lp.weight) || 1
+  const lpMove = lpSpeed > 0 ? lpDistance / lpSpeed : 0
+  const lpTransport = lpPick + lpLoad + lpMove
+  const lpDailyTrips = lpTripsPerHour * lpHours
+  const lpDailyTime = lpTransport * lpDailyTrips
+  const lpBase = lpDailyTime > 0 ? lpDailyTime / (lpHours * 3600) : 0
+  const lpAvailable = (lpHours * 3600 * lpAvailability) > 0 ? lpDailyTime / (lpHours * 3600 * lpAvailability) : 0
+  ws7.addRows([
+    ['피킹 시간(sec)', lp.pickTime],
+    ['로딩/언로딩 시간(sec)', lp.loadTime],
+    ['왕복 이동 거리(m)', lp.distance],
+    ['이동 속도(m/sec)', lp.speed],
+    ['이동 시간(sec)', lpMove.toFixed(1)],
+    ['물류 운반 시간(sec)', lpTransport.toFixed(1)],
+    ['시간당 운반 횟수', lp.tripsPerHour],
+    ['일 작업 시간(h)', lpHours],
+    ['일 운반 횟수', lpDailyTrips.toFixed(0)],
+    ['총 물류 운반 시간(sec)', lpDailyTime.toFixed(0)],
+    ['물류 운반 인원(명)', lpBase.toFixed(1)],
+    ['여유율 기준 인원(명)', lpAvailable.toFixed(1)],
+    ['가중치', lpWeight],
+    ['최종 물류 적정 인원(명)', (lpBase * lpWeight).toFixed(1)]
+  ])
+
+  /* ─── 8. 물류 창고 면적 ─── */
+  const ws8 = workbook.addWorksheet('8.물류창고면적')
+  ws8.columns = [
+    { header: '창고 유형', key: 'warehouseType', width: 14 },
+    { header: 'CMDT', key: 'cmdt', width: 16 },
+    { header: '구분', key: 'category', width: 16 },
+    { header: '일 생산 수량', key: 'dailyQty', width: 14 },
+    { header: '용기', key: 'container', width: 12 },
+    { header: 'L', key: 'length', width: 10 },
+    { header: 'W', key: 'width', width: 10 },
+    { header: 'H', key: 'height', width: 10 },
+    { header: '용기 면적(m²)', key: 'occupiedArea', width: 14 },
+    { header: '적재 수량', key: 'loadQty', width: 12 },
+    { header: '적재 단수', key: 'stackLevel', width: 12 },
+    { header: 'Total 수량', key: 'totalLoadQty', width: 12 },
+    { header: '일일 Pallet 수', key: 'dailyPallets', width: 14 },
+    { header: '일일 면적(m²)', key: 'dailyArea', width: 14 },
+    { header: 'DIO', key: 'dio', width: 10 },
+    { header: '창고 여유율', key: 'margin', width: 12 },
+    { header: '창고 면적(m²)', key: 'warehouseM2', width: 16 },
+    { header: '창고 면적(평)', key: 'warehousePyeong', width: 16 }
+  ]
+  styleHeaderRow(ws8.getRow(1))
+  const whItems = state.warehouseArea?.items || []
+  let whDailyPallets = 0, whDailyArea = 0, whM2 = 0, whPyeong = 0
+  whItems.forEach(item => {
+    const occupiedArea = n(item.length) * n(item.width)
+    const totalLoadQty = n(item.loadQty) * (n(item.stackLevel) || 1)
+    const dailyPallets = totalLoadQty > 0 ? n(item.dailyQty) / totalLoadQty : 0
+    const dailyArea = occupiedArea * dailyPallets
+    const warehouseM2 = dailyArea * n(item.dio) * (n(item.margin) || 1)
+    const warehousePyeong = warehouseM2 / 3.3
+    whDailyPallets += dailyPallets
+    whDailyArea += dailyArea
+    whM2 += warehouseM2
+    whPyeong += warehousePyeong
+    ws8.addRow([
+      item.warehouseType, item.cmdt, item.category, n(item.dailyQty), item.container,
+      n(item.length), n(item.width), n(item.height), occupiedArea.toFixed(2),
+      n(item.loadQty), n(item.stackLevel) || 1, totalLoadQty.toFixed(0),
+      dailyPallets.toFixed(0), dailyArea.toFixed(1), n(item.dio), n(item.margin) || 1,
+      warehouseM2.toFixed(0), warehousePyeong.toFixed(0)
+    ])
+  })
+  ws8.addRow([])
+  applySubHeader(ws8.addRow(['Sub Total']))
+  ws8.addRow(['', '', '', '', '', '', '', '', '', '', '', '', whDailyPallets.toFixed(0), whDailyArea.toFixed(0), '', '', whM2.toFixed(0), whPyeong.toFixed(0)])
+
+  /* ─── 9. 물류 자동화율 ─── */
+  const ws9 = workbook.addWorksheet('9.물류자동화율')
+  ws9.columns = [
+    { header: '항목', key: 'k', width: 36 },
+    { header: '값', key: 'v', width: 18 }
+  ]
+  styleHeaderRow(ws9.getRow(1))
+  const auto = state.automationRate || {}
+  const arTotal = n(auto.totalItems)
+  const arAutomated = n(auto.automatedItems)
+  const arRate = arTotal > 0 ? (arAutomated / arTotal) * 100 : 0
+  const rhTotal = n(auto.rehandlingTotalItems) || arTotal
+  const rhItems = n(auto.rehandlingItems)
+  const noRhRate = rhTotal > 0 ? (1 - (rhItems / rhTotal)) * 100 : 0
+  ws9.addRows([
+    ['회사명', auto.companyName],
+    ['측정자', auto.inspector],
+    ['총 Item 수', auto.totalItems],
+    ['자동화 적용 Item 수', auto.automatedItems],
+    ['물류 자동화율(%)', arRate.toFixed(1)],
+    ['입고 Item 수', auto.rehandlingTotalItems || auto.totalItems],
+    ['Re-Handling Item 수', auto.rehandlingItems],
+    ['No Re-Handling율(%)', noRhRate.toFixed(1)]
+  ])
 
   const buffer = await workbook.xlsx.writeBuffer()
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, '')

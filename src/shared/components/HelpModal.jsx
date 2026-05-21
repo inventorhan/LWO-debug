@@ -7,7 +7,10 @@ const TABS = [
   { id: 'area',      icon: '📐', title: '면적 효율' },
   { id: 'inventory', icon: '📦', title: '재고 보관량' },
   { id: 'invStats',  icon: '📈', title: '실적 기준 재고' },
-  { id: 'amr',       icon: '🤖', title: 'AMR 대수' }
+  { id: 'amr',       icon: '🤖', title: 'AMR 대수' },
+  { id: 'personnelPlan', icon: '👥', title: '물류 적정 인원' },
+  { id: 'warehouseArea', icon: '🏭', title: '물류 창고 면적' },
+  { id: 'automationRate', icon: '🦾', title: '물류 자동화율' }
 ]
 
 const C = {
@@ -107,11 +110,11 @@ const Table = ({ headers, rows }) => (
 const IntroContent = () => (
   <>
     <Section title="LWO 물류 분석 Tool이란?">
-      <p>LWO(Logistics Work Optimize)는 <b>물류 현장의 핵심 KPI 6가지</b>를 휴대폰으로 측정·계산할 수 있는 도구입니다. 측정 데이터는 모두 자동 저장되며, 결과를 엑셀로 내보낼 수 있습니다.</p>
+      <p>LWO(Logistics Work Optimize)는 <b>물류 현장의 핵심 KPI 9가지</b>를 휴대폰으로 측정·계산할 수 있는 도구입니다. 측정 데이터는 모두 자동 저장되며, 결과를 엑셀로 내보낼 수 있습니다.</p>
       <Tip type="ok">현장에서 스톱워치 + 줄자 + 메모지로 하던 작업을 한 화면에서 해결합니다.</Tip>
     </Section>
 
-    <Section title="6개 분석 모듈 한눈에 보기">
+    <Section title="9개 분석 모듈 한눈에 보기">
       <Table
         headers={['모듈', '무엇을 측정?', '결과']}
         rows={[
@@ -120,7 +123,10 @@ const IntroContent = () => (
           ['📐 면적 효율', '공장·구역 면적 + 적재물 체적', '면적 효율 %, 체적 사용율 %'],
           ['📦 재고 보관량', '고객/자사 생산량 + 리드타임 + 적정 Space', '최종 적정 재고 (대) + 면적 (m²)'],
           ['📈 실적 기준 재고', '일별 생산·출하·재고 실적 통계', '99.9%/99.5% 적정재고 + 재고일수'],
-          ['🤖 AMR 대수', '생산 Tact + AMR 왕복 시간', '필요 대수 (대)']
+          ['🤖 AMR 대수', '생산 Tact + AMR 왕복 시간', '필요 대수 (대)'],
+          ['👥 물류 적정 인원', '피킹·이동·로딩 시간과 운반 횟수', '필요 인원 (명)'],
+          ['🏭 물류 창고 면적', 'CMDT별 물동·용기·DIO·여유율', '창고 면적 (m²/평)'],
+          ['🦾 물류 자동화율', '자동화 적용 Item + Re-Handling Item', '자동화율 %, No Re-Handling율 %']
         ]}
       />
     </Section>
@@ -138,7 +144,7 @@ const IntroContent = () => (
         rows={[
           ['📂 열기',  '이전에 저장한 JSON 파일을 불러옵니다'],
           ['💾 저장',  '현재 입력을 Documents/LWO/ 폴더에 JSON으로 저장'],
-          ['📊 엑셀',  '6개 모듈 전체를 엑셀 파일로 한 번에 내보내기'],
+          ['📊 엑셀',  '9개 모듈 전체를 엑셀 파일로 한 번에 내보내기'],
           ['🔄 초기화', '모든 입력 데이터 삭제 (복구 불가)'],
           ['📖 설명서', '바로 이 도움말 — 언제든 다시 열 수 있습니다']
         ]}
@@ -180,6 +186,15 @@ const WorkerContent = () => (
 부하 가중 시간 = 3600초 × 부하 가중치
 부하율(%) = 총 운반 시간 ÷ 부하 가중 시간 × 100`}</Formula>
       <Tip>예: 가중치 0.8 → 가중 시간 2880초. 총 운반 시간 2000초 → 부하율 약 69%.</Tip>
+    </Section>
+
+    <Section title="상세 시간 그래프">
+      <p>측정 데이터가 1회 이상 있으면 <b>상세 시간 그래프</b>에서 회차별 또는 작업자별 시간을 확인할 수 있습니다.</p>
+      <ul style={{ paddingLeft: 18, marginTop: 6 }}>
+        <li><b>회차별</b>: 선택 작업자의 피킹·이동·로딩/언로딩·회수 시간을 회차별로 비교</li>
+        <li><b>작업자별</b>: 여러 작업자의 총 운반 시간과 평균 부하율 비교</li>
+        <li><b>라인형 / 박스형</b>: 추세 확인 또는 항목별 구성 비교에 맞춰 선택</li>
+      </ul>
     </Section>
 
     <Section title="결과 해석">
@@ -291,13 +306,13 @@ const AreaContent = () => (
 const InventoryContent = () => (
   <>
     <Section title="이 모듈은 언제 쓰나요?">
-      <p>고객사로 공급하는 물량이 부족하지 않도록 <b>적정 재고 보관량</b>을 계산합니다. 일일 부족 수량 + 운반 리드타임 + 고객사 운영 재고를 모두 합산.</p>
+      <p>고객사로 공급하는 물량이 부족하지 않도록 <b>적정 재고 보관량</b>을 계산합니다. 부족/잉여 차이의 절대값 + 운반 리드타임 + 고객사 운영 재고를 합산합니다.</p>
     </Section>
 
     <Section title="4단계 입력">
       <Step n="1" title="① 자사 기초 재고 — 고객/자사 라인">
         고객 주간/야간 UPH 및 작업 시간, 자사 주간/야간 UPH 및 작업 시간 입력.<br/>
-        → <b>일일 부족 수량 = 고객 일일 − 자사 일일</b>
+        → <b>일일 부족/잉여 차이 = 고객 일일 − 자사 일일</b>. 최종 재고 계산에는 절대값을 적용합니다.
       </Step>
       <Step n="2" title="② 운반 리드타임 → 수량 환산">
         4가지 시간(초)을 입력하면 자동으로 수량(대)으로 환산됩니다:
@@ -315,7 +330,7 @@ const InventoryContent = () => (
           <li><b>고객 안전 재고 시간</b>: 7대 로스 감안</li>
         </ul>
       </Step>
-      <Step n="4" title="④ 최종 적정 재고 = ① + ② + ③">
+      <Step n="4" title="④ 최종 적정 재고 = ① 절대값 + ② + ③">
         자동 합산되어 최하단에 표시됩니다.
       </Step>
     </Section>
@@ -323,13 +338,14 @@ const InventoryContent = () => (
     <Section title="자동 산출 공식">
       <Formula>{`고객 일일 생산   = 주간(UPH × 시간) + 야간(UPH × 시간)
 자사 일일 생산   = 주간(UPH × 시간) + 야간(UPH × 시간)
-일일 부족 수량   = 고객 일일 − 자사 일일
+일일 부족/잉여 차이 = 고객 일일 − 자사 일일
                   ※ 양수 → 부족 / 음수 → 자사 잉여(녹색 표시)
+적용 수량        = |일일 부족/잉여 차이|
 
 각 시간 → 수량 = (시간 ÷ 3600) × 고객 주간 UPH
 리드타임 재고   = 숙성 + 안심 + 상차 + 이동 수량
 운영 재고      = 하차 + 대기 + 안전 재고 수량
-최종 적정 재고  = 부족 수량 + 리드타임 재고 + 운영 재고`}</Formula>
+최종 적정 재고  = 적용 수량 + 리드타임 재고 + 운영 재고`}</Formula>
     </Section>
 
     <Section title="용어 정리">
@@ -484,6 +500,74 @@ Cycle = 3600 / 10.8 ≈ 333초
   </>
 )
 
+const PersonnelPlanContent = () => (
+  <>
+    <Section title="이 모듈은 언제 쓰나요?">
+      <p>피킹·이동·로딩/언로딩 시간과 일 작업 시간을 기준으로 <b>물류 운반에 필요한 적정 인원</b>을 산출합니다.</p>
+    </Section>
+
+    <Section title="입력 절차">
+      <Step n="1" title="작업 조건 입력">피킹 시간, 로딩/언로딩 시간, 왕복 이동 거리, 이동 속도를 입력합니다.</Step>
+      <Step n="2" title="운반 횟수 입력">시간당 운반 횟수와 일 작업 시간을 입력하면 일 운반 횟수가 자동 계산됩니다.</Step>
+      <Step n="3" title="가중치 적용">휴식·부대 작업·현장 여건을 반영하는 가중치를 입력해 최종 인원을 보정합니다.</Step>
+    </Section>
+
+    <Section title="자동 산출 공식">
+      <Formula>{`이동 시간       = 왕복 이동 거리 ÷ 이동 속도
+물류 운반 시간   = 피킹 시간 + 로딩/언로딩 시간 + 이동 시간
+일 운반 횟수     = 시간당 운반 횟수 × 일 작업 시간
+총 운반 시간     = 물류 운반 시간 × 일 운반 횟수
+물류 운반 인원   = 총 운반 시간 ÷ (일 작업 시간 × 3600)
+최종 적정 인원   = 물류 운반 인원 × 가중치`}</Formula>
+      <Tip>휴대폰 하단 탭에서는 공간을 줄이기 위해 <b>물류인원</b>으로 표시됩니다.</Tip>
+    </Section>
+  </>
+)
+
+const WarehouseAreaContent = () => (
+  <>
+    <Section title="이 모듈은 언제 쓰나요?">
+      <p>CMDT별 일 Max 물동, 용기 크기, 적재 수량, DIO, 창고 여유율을 기준으로 <b>필요 창고 면적</b>을 산출합니다.</p>
+    </Section>
+
+    <Section title="입력 절차">
+      <Step n="1" title="CMDT 항목 입력">CMDT명, 일 Max 물동, 용기 가로·세로, 적재 수량, 적재 단수를 입력합니다.</Step>
+      <Step n="2" title="재고 일수와 여유율 입력">DIO와 창고 여유율을 입력합니다. 예: 2.0 = 통로/안전공간 포함 200% 기준.</Step>
+      <Step n="3" title="합계 확인">항목별 면적과 전체 창고 면적(m²/평)을 확인합니다.</Step>
+    </Section>
+
+    <Section title="자동 산출 공식">
+      <Formula>{`용기 면적       = 용기 가로 × 용기 세로
+Total 적재 수량 = 적재 수량 × 적재 단수
+일일 Pallet 수  = 일 Max 물동 ÷ Total 적재 수량
+일일 면적       = 용기 면적 × 일일 Pallet 수
+창고 면적(m²)   = 일일 면적 × DIO × 창고 여유율
+창고 면적(평)   = 창고 면적(m²) ÷ 3.3`}</Formula>
+      <Tip>휴대폰 하단 탭에서는 <b>창고면적</b>으로 표시됩니다.</Tip>
+    </Section>
+  </>
+)
+
+const AutomationRateContent = () => (
+  <>
+    <Section title="이 모듈은 언제 쓰나요?">
+      <p>자동화 적용 Item 수와 Re-Handling Item 수를 기준으로 <b>물류 자동화율</b>과 <b>No Re-Handling율</b>을 함께 확인합니다.</p>
+    </Section>
+
+    <Section title="입력 절차">
+      <Step n="1" title="자동화 Item 입력">전체 Item 수와 자동화 적용 Item 수를 입력합니다.</Step>
+      <Step n="2" title="Re-Handling 입력">입고 Item 수와 Re-Handling Item 수를 입력합니다.</Step>
+      <Step n="3" title="현장 사진 첨부">필요하면 자동화 구간 또는 Re-Handling 구간 사진을 첨부해 근거를 남깁니다.</Step>
+    </Section>
+
+    <Section title="자동 산출 공식">
+      <Formula>{`물류 자동화율(%)      = 자동화 적용 Item 수 ÷ 총 Item 수 × 100
+No Re-Handling율(%) = (1 - Re-Handling Item 수 ÷ 입고 Item 수) × 100`}</Formula>
+      <Tip>휴대폰 하단 탭에서는 <b>자동화율</b>로 표시됩니다.</Tip>
+    </Section>
+  </>
+)
+
 const CONTENTS = {
   intro: <IntroContent />,
   worker: <WorkerContent />,
@@ -491,7 +575,10 @@ const CONTENTS = {
   area: <AreaContent />,
   inventory: <InventoryContent />,
   invStats: <InvStatsContent />,
-  amr: <AmrContent />
+  amr: <AmrContent />,
+  personnelPlan: <PersonnelPlanContent />,
+  warehouseArea: <WarehouseAreaContent />,
+  automationRate: <AutomationRateContent />
 }
 
 export default function HelpModal({ open, onClose }) {

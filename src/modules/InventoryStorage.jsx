@@ -22,9 +22,11 @@ export default function InventoryStorage({ data, updateData }) {
   const selfDayProd   = useMemo(() => n(f.selfDayUph)   * n(f.selfDayTime),   [f.selfDayUph, f.selfDayTime])
   const selfNightProd = useMemo(() => n(f.selfNightUph) * n(f.selfNightTime), [f.selfNightUph, f.selfNightTime])
   const selfDailyProd = useMemo(() => selfDayProd + selfNightProd,             [selfDayProd, selfNightProd])
-  /* 일열 부족 수량 (양수=부족, 음수=잉여 → +/- 부호 표시) */
+  /* 일일 부족 수량 (양수=부족, 음수=잉여 → +/- 부호 표시) */
   const shortageQty = useMemo(() => custDailyProd - selfDailyProd, [custDailyProd, selfDailyProd])
+  const appliedShortageQty = useMemo(() => Math.abs(shortageQty), [shortageQty])
   const fmtSigned = (v) => v === 0 ? '0대' : `${v > 0 ? '+' : '−'}${Math.abs(Math.round(v)).toLocaleString()}대`
+  const fmtAbsQty = (v) => `${Math.abs(Math.round(v)).toLocaleString()}대`
 
   /* 고객 UPH 기준 (시간 → 수량 환산용) */
   const refUph = n(f.customerDayUph)
@@ -45,8 +47,8 @@ export default function InventoryStorage({ data, updateData }) {
     [unloadQty, waitQty, customerSafeQty])
 
   /* ── 4. 최종 적정 재고 ── */
-  const finalStock = useMemo(() => shortageQty + leadTimeStock + customerOpsStock,
-    [shortageQty, leadTimeStock, customerOpsStock])
+  const finalStock = useMemo(() => appliedShortageQty + leadTimeStock + customerOpsStock,
+    [appliedShortageQty, leadTimeStock, customerOpsStock])
 
   /* ── 5. 적정 Space 산출 ── */
   const spaceWidth   = n(f.spaceWidth)
@@ -83,12 +85,12 @@ export default function InventoryStorage({ data, updateData }) {
             <HintFormula>{`고객 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
 자사 일일 = 주간(UPH × 시간) + 야간(UPH × 시간)
 부족 수량 = 고객 일일 − 자사 일일
-            (양수 → 부족, 음수 → 잉여)`}</HintFormula>
+적용 수량 = |부족 수량|`}</HintFormula>
             <ul style={{ paddingLeft: 18, margin: '6px 0' }}>
               <li><b>UPH</b>: 시간당 생산 수량 (Units Per Hour)</li>
               <li>주간/야간 모두 운영하지 않으면 해당 시간을 <b>0</b>으로 두세요</li>
             </ul>
-            <HintNote type="ok">결과가 음수(잉여)면 박스가 녹색으로 표시됩니다.</HintNote>
+            <HintNote type="ok">결과가 음수(잉여)여도 적정 재고 계산에는 절대값으로 반영합니다.</HintNote>
           </HelpHint>
         </div>
 
@@ -170,10 +172,9 @@ export default function InventoryStorage({ data, updateData }) {
         <div className="input-grid">
           <div className="result-box full-width" style={{ background: shortageQty < 0 ? '#047857' : '#A50034', padding: '14px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
-              일일 부족 수량 (기초 재고) = 고객 일일 − 자사 일일
-              {shortageQty < 0 && ' · 잉여(자사 초과)'}
+              일일 부족/잉여 차이 = 고객 일일 − 자사 일일 ({fmtSigned(shortageQty)})
             </span>
-            <span className="result-box__value" style={{ fontSize: '1.5rem' }}>{fmtSigned(shortageQty)}</span>
+            <span className="result-box__value" style={{ fontSize: '1.5rem' }}>{fmtAbsQty(appliedShortageQty)}</span>
           </div>
         </div>
       </div>
@@ -264,17 +265,17 @@ export default function InventoryStorage({ data, updateData }) {
           <HelpHint title="최종 적정 재고">
             <p>위 3가지 결과를 모두 합한 <b>최종 권장 보관 수량</b>입니다.</p>
             <HintFormula>{`Total 최종 적정 재고
-  = ① 일일 부족 수량
+  = ① 일일 부족/잉여 절대값
   + ② 리드타임 재고
   + ③ 고객사 운영 재고`}</HintFormula>
             <HintNote type="ok">이 수치만큼 자사 창고에 항상 확보해두면 고객사 라인이 멈추지 않습니다.</HintNote>
-            <HintNote type="warn">잉여(자사 일일 &gt; 고객 일일) 상태에선 ① 항목이 음수이므로 최종값이 작아질 수 있습니다.</HintNote>
+            <HintNote type="warn">잉여(자사 일일 &gt; 고객 일일) 상태에서도 ① 항목은 절대값으로 적용합니다.</HintNote>
           </HelpHint>
         </div>
         <div className="input-grid">
           <div className="result-box tone-blue">
-            <span className="result-box__label">① 일일 부족 수량</span>
-            <span className="result-box__value">{fmtSigned(shortageQty)}</span>
+            <span className="result-box__label">① 일일 부족/잉여 절대값</span>
+            <span className="result-box__value">{fmtAbsQty(appliedShortageQty)}</span>
           </div>
           <div className="result-box tone-blue">
             <span className="result-box__label">② 리드타임 재고</span>
@@ -286,14 +287,14 @@ export default function InventoryStorage({ data, updateData }) {
           </div>
           <div className="result-box full-width" style={{ background: '#A50034', padding: '18px 16px' }}>
             <span className="result-box__label" style={{ fontSize: '0.85rem' }}>
-              ⭐ Total 최종 적정 재고 = ① + ② + ③
+              ⭐ Total 최종 적정 재고 = ① 절대값 + ② + ③
             </span>
             <span className="result-box__value" style={{ fontSize: '1.7rem' }}>{fmtN(finalStock, '대', 0)}</span>
           </div>
         </div>
 
         <div style={{ marginTop: 12, padding: 12, background: '#f8fafc', borderRadius: 8, fontSize: '0.78rem', color: '#4A4045', lineHeight: 1.7 }}>
-          <div><strong>① Total 최종 적재 재고</strong> = 일일 부족 수량 + 리드타임 재고 + 고객사 운영 재고</div>
+          <div><strong>① Total 최종 적재 재고</strong> = 일일 부족/잉여 절대값 + 리드타임 재고 + 고객사 운영 재고</div>
           <div><strong>② 안심 재고</strong> : 운반 사고, 설비 고장 빈도수, 차량 수배 등등</div>
           <div><strong>③ 대기 시간</strong> : 고객사 조립 라인 투입 전 보관 수량</div>
           <div><strong>④ 고객 안전 재고</strong> : 7대 로스 감안 재고</div>

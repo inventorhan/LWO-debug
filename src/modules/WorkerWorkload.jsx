@@ -22,6 +22,85 @@ const COLORS = {
 /* 부하 가중치 select 옵션 */
 const WEIGHT_OPTIONS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
+const METRIC_DEFS = [
+  { type: 'pick', label: '피킹 시간', color: COLORS.pick },
+  { type: 'move', label: '이동 시간', color: COLORS.move },
+  { type: 'load', label: '로딩/언로딩 시간', color: COLORS.load },
+  { type: 'recovery', label: '회수 시간', color: COLORS.recovery }
+]
+
+function avg(values) {
+  const list = values.filter(v => Number.isFinite(v))
+  return list.length ? list.reduce((sum, v) => sum + v, 0) / list.length : 0
+}
+
+function quartiles(values) {
+  const list = values.filter(v => Number.isFinite(v)).sort((a, b) => a - b)
+  if (!list.length) return { min: 0, q1: 0, med: 0, q3: 0, max: 0 }
+  const pick = (p) => {
+    const idx = (list.length - 1) * p
+    const lo = Math.floor(idx)
+    const hi = Math.ceil(idx)
+    return lo === hi ? list[lo] : list[lo] + (list[hi] - list[lo]) * (idx - lo)
+  }
+  return { min: list[0], q1: pick(0.25), med: pick(0.5), q3: pick(0.75), max: list[list.length - 1] }
+}
+
+function MiniLineChart({ labels, values, color }) {
+  const width = 300
+  const height = 120
+  const max = Math.max(1, ...values)
+  const points = values.map((v, i) => {
+    const x = labels.length <= 1 ? width / 2 : 16 + (i * (width - 32)) / (labels.length - 1)
+    const y = height - 18 - ((v / max) * (height - 34))
+    return { x, y, v }
+  })
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
+  return (
+    <div>
+      <svg className="detail-chart-svg" viewBox={`0 0 ${width} ${height}`} role="img">
+        <line x1="16" y1={height - 18} x2={width - 16} y2={height - 18} stroke="#D4C8CD" strokeWidth="1" />
+        <path d={path} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="5" fill="white" stroke={color} strokeWidth="3">
+            <title>{`${labels[i]}: ${p.v.toFixed(1)}초`}</title>
+          </circle>
+        ))}
+      </svg>
+      <div className="detail-chart-labels">
+        {labels.map(label => <span key={label}>{label}</span>)}
+      </div>
+    </div>
+  )
+}
+
+function MiniBoxChart({ labels, samples, color }) {
+  const stats = samples.map(quartiles)
+  const max = Math.max(1, ...stats.map(s => s.max))
+  const y = (v) => 88 - ((v / max) * 72)
+  return (
+    <div className="detail-box-chart">
+      {stats.map((s, i) => {
+        const boxTop = y(s.q3)
+        const boxBottom = y(s.q1)
+        return (
+          <div className="detail-box-chart__cell" key={labels[i]}>
+            <svg viewBox="0 0 48 100" className="detail-box-svg" role="img">
+              <line x1="24" y1={y(s.min)} x2="24" y2={y(s.max)} stroke="#1F1218" strokeWidth="1" />
+              <line x1="17" y1={y(s.min)} x2="31" y2={y(s.min)} stroke="#1F1218" strokeWidth="1" />
+              <line x1="17" y1={y(s.max)} x2="31" y2={y(s.max)} stroke="#1F1218" strokeWidth="1" />
+              <rect x="11" y={boxTop} width="26" height={Math.max(4, boxBottom - boxTop)} fill="#F8FAFC" stroke={color} strokeWidth="2" />
+              <line x1="11" y1={y(s.med)} x2="37" y2={y(s.med)} stroke="#1F1218" strokeWidth="1.5" />
+              <title>{`${labels[i]}: 중앙 ${s.med.toFixed(1)}초`}</title>
+            </svg>
+            <span>{labels[i]}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function WorkerWorkload({
   data, updateData, addPhoto, removePhoto,
   addPersonnel, removePersonnel, updatePersonnel,
@@ -47,6 +126,8 @@ export default function WorkerWorkload({
   const activeIndex = activeCycle ? measurements.findIndex(m => m.id === activeCycleId) + 1 : 0
 
   const [chartMode, setChartMode] = useState('total')   // 'total' | 'avg'
+  const [detailChartBasis, setDetailChartBasis] = useState('cycle')
+  const [detailChartType, setDetailChartType] = useState('line')
   const [isManagerOpen, setIsManagerOpen] = useState(false)
   const [newPersonName, setNewPersonName] = useState('')
   const [editingName, setEditingName] = useState(null)
@@ -146,6 +227,38 @@ export default function WorkerWorkload({
     totalT: acc.totalT + w.totalT,
     dist: acc.dist + w.dist
   }), { pickT: 0, moveT: 0, loadT: 0, recoverT: 0, totalT: 0, dist: 0 })
+
+  const cycleMetric = (cycle, type) => cycle?.cards?.reduce((sum, c) => {
+    const g = parseFloat(getGap(c.start, c.end)) || 0
+    return c.type === type ? sum + g : sum
+  }, 0) || 0
+
+  const workerMetricSamples = (name, type) => {
+    const pData = dataByPersonnel[name] || {}
+    return (pData.measurements || []).map(cycle => cycleMetric(cycle, type))
+  }
+
+  const detailedCharts = METRIC_DEFS.map(metric => {
+    if (detailChartBasis === 'personnel') {
+      const rows = (personnelList || []).map(name => ({
+        label: name,
+        samples: workerMetricSamples(name, metric.type)
+      })).filter(row => row.label)
+      const allSamples = rows.flatMap(row => row.samples)
+      return {
+        ...metric,
+        labels: ['평균', ...rows.map(row => row.label)],
+        samples: [allSamples, ...rows.map(row => row.samples)]
+      }
+    }
+
+    const cycleSamples = measurements.map(cycle => cycleMetric(cycle, metric.type))
+    return {
+      ...metric,
+      labels: ['평균', ...measurements.map((_, i) => `${i + 1}회`)],
+      samples: [cycleSamples, ...cycleSamples.map(v => [v])]
+    }
+  })
 
   const renderSegment = (val, total, color, label, unit = '') => {
     if (val <= 0 || total <= 0) return null
@@ -389,6 +502,52 @@ export default function WorkerWorkload({
               {b.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* 상세 그래프 */}
+      <div className="section-card">
+        <div className="section-title">
+          상세 시간 그래프
+          <HelpHint title="상세 시간 그래프">
+            <p>피킹, 이동, 로딩/언로딩, 회수 시간을 회차별 또는 작업자별로 비교합니다.</p>
+            <HintNote>그래프 종류는 라인형과 박스형 중 선택할 수 있습니다.</HintNote>
+          </HelpHint>
+        </div>
+
+        <div className="chart-control-row">
+          <label>
+            <span>그래프 기준</span>
+            <select className="input-field" value={detailChartBasis}
+              onChange={e => setDetailChartBasis(e.target.value)}>
+              <option value="cycle">회차별</option>
+              <option value="personnel">작업자별</option>
+            </select>
+          </label>
+          <label>
+            <span>그래프 종류</span>
+            <select className="input-field" value={detailChartType}
+              onChange={e => setDetailChartType(e.target.value)}>
+              <option value="line">라인 그래프</option>
+              <option value="box">박스형 그래프</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="detail-chart-grid">
+          {detailedCharts.map(chart => {
+            const values = chart.samples.map(s => avg(s))
+            return (
+              <div className="detail-chart-card" key={chart.type}>
+                <div className="detail-chart-card__title">
+                  {detailChartBasis === 'personnel' ? chart.label : `${activePersonnel}: ${chart.label}`}
+                </div>
+                {detailChartType === 'line'
+                  ? <MiniLineChart labels={chart.labels} values={values} color={chart.color} />
+                  : <MiniBoxChart labels={chart.labels} samples={chart.samples} color={chart.color} />}
+              </div>
+            )
+          })}
         </div>
       </div>
 

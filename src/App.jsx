@@ -6,6 +6,9 @@ import AreaEfficiency from './modules/AreaEfficiency'
 import InventoryStorage from './modules/InventoryStorage'
 import InventoryStatistics from './modules/InventoryStatistics'
 import AmrCalculation from './modules/AmrCalculation'
+import LogisticsPersonnel from './modules/LogisticsPersonnel'
+import WarehouseArea from './modules/WarehouseArea'
+import AutomationRate from './modules/AutomationRate'
 import { exportToExcel } from './shared/utils/excelExport'
 import { saveJson } from './shared/utils/saveAndShare'
 import SplashScreen from './shared/components/SplashScreen'
@@ -18,11 +21,15 @@ const TABS = [
   { id: 'inventory', label: '재고 보관량',   short: '재고',   icon: '📦' },
   { id: 'invStats',  label: '실적 기준 재고', short: '실적', icon: '📈' },
   { id: 'amr',       label: 'AMR 대수',      short: 'AMR',    icon: '🤖' },
+  { id: 'personnelPlan', label: '물류 적정 인원', short: '물류인원', icon: '👥' },
+  { id: 'warehouseArea', label: '물류 창고 면적', short: '창고면적', icon: '🏭' },
+  { id: 'automationRate', label: '물류 자동화율', short: '자동화율', icon: '🦾' },
 ]
 
 export default function App() {
   const {
     state, setState, updateWorker, updateElevator, updateArea, updateInventory, updateAmr,
+    updateLogisticsPersonnel, updateWarehouseArea, updateAutomationRate,
     addPhoto, removePhoto, addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
     switchPersonnel, addTransportType, updateTransportType, removeTransportType,
@@ -75,7 +82,10 @@ export default function App() {
           elevator:  { ...initialState.elevator, ...(loaded.elevator || {}) },
           area:      { ...initialState.area, ...(loaded.area || {}) },
           inventory: { ...initialState.inventory, ...(loaded.inventory || {}) },
-          amr:       { ...initialState.amr, ...(loaded.amr || {}) }
+          amr:       { ...initialState.amr, ...(loaded.amr || {}) },
+          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...(loaded.logisticsPersonnel || {}) },
+          warehouseArea: { ...initialState.warehouseArea, ...(loaded.warehouseArea || {}) },
+          automationRate: { ...initialState.automationRate, ...(loaded.automationRate || {}) }
         })
         showToast('📂 데이터를 불러왔습니다.')
       } catch {
@@ -177,6 +187,12 @@ export default function App() {
         />
       case 'amr':
         return <AmrCalculation data={state.amr} updateData={updateAmr} />
+      case 'personnelPlan':
+        return <LogisticsPersonnel data={state.logisticsPersonnel} updateData={updateLogisticsPersonnel} />
+      case 'warehouseArea':
+        return <WarehouseArea data={state.warehouseArea} updateData={updateWarehouseArea} />
+      case 'automationRate':
+        return <AutomationRate data={state.automationRate} updateData={updateAutomationRate} />
       default: return null
     }
   }

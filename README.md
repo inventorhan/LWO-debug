@@ -1,6 +1,6 @@
 # 📦 LWO 물류 분석 Tool
 
-> **Logistics Work Optimize** — 휴대폰 하나로 물류 현장의 6가지 핵심 KPI를 측정·분석·시각화하는 도구
+> **Logistics Work Optimize** — 휴대폰 하나로 물류 현장의 9가지 핵심 KPI를 측정·분석·시각화하는 도구
 
 [![Web App](https://img.shields.io/badge/▶_웹앱_바로_실행-A50034?style=for-the-badge)](https://inventorhan.github.io/LWO-debug/)
 [![Manual](https://img.shields.io/badge/📖_사용_설명서-6F0023?style=for-the-badge)](https://inventorhan.github.io/LWO-debug/manual.html)
@@ -13,7 +13,7 @@
 물류 현장에서 스톱워치 · 줄자 · 메모지로 하던 작업을 **앱 화면 한 곳**에서 처리합니다.
 모든 데이터는 휴대폰 내부에 저장되며 서버로 전송되지 않습니다.
 
-### 6개 분석 모듈
+### 9개 분석 모듈
 
 | 모듈 | 무엇을 측정? | 결과 |
 |------|--------------|------|
@@ -23,15 +23,19 @@
 | 📦 **재고 보관량** | 고객 요구량 + 운반 리드타임 + 운영 재고 + **적정 Space** | 최종 적정 재고 (대) + 최종 적정 면적 (m²) |
 | 📈 **실적 기준 재고** | 일별 생산·출하·재고 실적 → 통계 분석 | **99.9%/99.5% 적정재고** + 재고 일수, 추이 차트 |
 | 🤖 **AMR 대수** | 생산 Tact + AMR 왕복 시간 | 필요 도입 대수 (대) |
+| 👥 **물류 적정 인원** | 피킹·이동·로딩 시간 + 운반 횟수 | 필요 인원 (명) |
+| 🏭 **물류 창고 면적** | CMDT별 물동·용기·DIO·여유율 | 창고 면적 (m²/평) |
+| 🦾 **물류 자동화율** | 자동화 적용 Item + Re-Handling Item | 자동화율 %, No Re-Handling율 % |
 
 ### 부가 기능
 
 - ⏱ **스톱워치 측정** — 회차별로 ▶ 시작 → ⏹ 종료
+- 📊 **작업자 상세 시간 그래프** — 회차별/작업자별 시간 비교, 라인형/박스형 전환
 - 📸 **사진 첨부** — 운반 수단·적재 상태·공장 도면 사진 임베드
 - 📊 **통계 분석 + 차트** — 일별 실적 데이터 → 평균/표편 + Z 기반 적정재고 + 추이 라인 차트
 - ⚙ **제품/모델 관리** — 드롭다운 + 추가/이름변경/삭제 모달 (조합별 데이터 독립 저장)
 - 💾 **JSON 저장/불러오기** — 측정 데이터 영구 보관
-- 📑 **Excel 내보내기** — 6개 모듈 전체를 한 파일로 (사진 포함)
+- 📑 **Excel 내보내기** — 9개 모듈 전체를 한 파일로 (사진 포함)
 - 📖 **인라인 도움말** — 각 섹션 옆 `?` 버튼 + 풀스크린 종합 설명서
 - 🌐 **4가지 배포 형태** — Android 앱(APK/AAB) + Windows EXE(설치형/포터블) + 단일 HTML 파일 + GitHub Pages 호스팅
 
@@ -71,13 +75,16 @@ lwo-app/
 ├─ src/
 │  ├─ App.jsx              ← 루트 컴포넌트 (헤더·탭·라우팅)
 │  ├─ store.js             ← 전역 상태 (useAppState 훅)
-│  ├─ modules/             ← 6개 분석 모듈
+│  ├─ modules/             ← 9개 분석 모듈
 │  │  ├─ WorkerWorkload.jsx
 │  │  ├─ ElevatorWorkload.jsx
 │  │  ├─ AreaEfficiency.jsx
 │  │  ├─ InventoryStorage.jsx
 │  │  ├─ InventoryStatistics.jsx   ← 실적 기준 적정 재고 (통계)
-│  │  └─ AmrCalculation.jsx
+│  │  ├─ AmrCalculation.jsx
+│  │  ├─ LogisticsPersonnel.jsx     ← 물류 적정 인원
+│  │  ├─ WarehouseArea.jsx          ← 물류 창고 면적
+│  │  └─ AutomationRate.jsx         ← 물류 자동화율
 │  └─ shared/              ← 재사용 컴포넌트 + 유틸
 ├─ android/                ← Capacitor 네이티브 프로젝트
 ├─ public/                 ← 정적 자산 (manual.html 포함)
@@ -101,7 +108,7 @@ npm run dev
 npm run build
 
 # 버전 증가
-npm run bump:patch   # 1.1.11 → 1.1.12
+npm run bump:patch   # 1.2.6 → 1.2.7
 npm run bump:minor   # 1.1.x → 1.2.0
 
 # Android 빌드

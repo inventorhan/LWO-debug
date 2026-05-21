@@ -101,6 +101,17 @@ export const initialState = {
     }
   },
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
+  logisticsPersonnel: {
+    pickTime: '', loadTime: '', distance: '', speed: 1.2,
+    tripsPerHour: '', hoursPerDay: 8, availability: 0.7, weight: 1.3
+  },
+  warehouseArea: {
+    items: []
+  },
+  automationRate: {
+    companyName: '', inspector: '', automationPhoto: null, rehandlingPhoto: null,
+    totalItems: '', automatedItems: '', rehandlingTotalItems: '', rehandlingItems: ''
+  },
   savedAt: null,
 }
 
@@ -216,7 +227,10 @@ export function useAppState() {
             }
             return base
           })(),
-          amr:            { ...initialState.amr, ...(parsed.amr || {}) }
+          amr:            { ...initialState.amr, ...(parsed.amr || {}) },
+          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...(parsed.logisticsPersonnel || {}) },
+          warehouseArea: { ...initialState.warehouseArea, ...(parsed.warehouseArea || {}) },
+          automationRate: { ...initialState.automationRate, ...(parsed.automationRate || {}) }
         })
       } catch {}
     }
@@ -766,6 +780,15 @@ export function useAppState() {
     }
   }), [])
   const updateAmr       = useCallback(u => setState(s => ({ ...s, amr: { ...s.amr, ...u } })), [])
+  const updateLogisticsPersonnel = useCallback(u => setState(s => ({
+    ...s, logisticsPersonnel: { ...s.logisticsPersonnel, ...u }
+  })), [])
+  const updateWarehouseArea = useCallback(u => setState(s => ({
+    ...s, warehouseArea: { ...s.warehouseArea, ...u }
+  })), [])
+  const updateAutomationRate = useCallback(u => setState(s => ({
+    ...s, automationRate: { ...s.automationRate, ...u }
+  })), [])
 
   const addCycle = useCallback(() => {
     setState(s => {
@@ -1102,6 +1125,7 @@ export function useAppState() {
   return {
     state, setState,
     updateWorker, updateElevator, updateArea, updateInventory, updateAmr,
+    updateLogisticsPersonnel, updateWarehouseArea, updateAutomationRate,
     addPhoto, removePhoto,
     addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,

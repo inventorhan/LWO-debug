@@ -151,12 +151,16 @@ export default function AreaEfficiency({ data, updateData }) {
           <div className="input-group full-width">
             <span className="input-label">공장 사진</span>
             <label className="btn" style={{
-              minHeight: factory.photo ? 'auto' : 80, padding: factory.photo ? 4 : 12,
+              height: factory.photo ? 'auto' : 80,
+              minHeight: factory.photo ? 160 : 80,
+              width: '100%',
+              padding: factory.photo ? 4 : 12,
               background: '#F4EFF1', border: '1.5px dashed #D4C8CD', color: '#7C6E74',
-              flexDirection: 'column', fontSize: '0.85rem', gap: 4, cursor: 'pointer'
+              flexDirection: 'column', fontSize: '0.85rem', gap: 4, cursor: 'pointer',
+              overflow: 'hidden', whiteSpace: 'normal'
             }}>
               {factory.photo
-                ? <img src={factory.photo} alt="공장" style={{ maxHeight: 220, width: '100%', objectFit: 'contain', borderRadius: 6 }} />
+                ? <img src={factory.photo} alt="공장" style={{ maxHeight: 220, width: '100%', objectFit: 'contain', borderRadius: 6, display: 'block' }} />
                 : <><span style={{ fontSize: '1.5rem' }}>📷</span><span>공장 사진 촬영</span></>}
               <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
                 onChange={e => { if (e.target.files[0]) handlePhoto('factory', null, null, e.target.files[0]) }} />
