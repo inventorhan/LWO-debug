@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useAppState, initialState } from './store'
+import { useAppState, initialState, migrateLogisticsPersonnel } from './store'
 import WorkerWorkload from './modules/WorkerWorkload'
 import ElevatorWorkload from './modules/ElevatorWorkload'
 import AreaEfficiency from './modules/AreaEfficiency'
@@ -23,12 +23,12 @@ const TABS = [
   { id: 'amr',       label: 'AMR 대수',      short: 'AMR',    icon: '🤖' },
   { id: 'personnelPlan', label: '물류 적정 인원', short: '물류인원', icon: '👥' },
   { id: 'warehouseArea', label: '물류 창고 면적', short: '창고면적', icon: '🏭' },
-  { id: 'automationRate', label: '물류 자동화율', short: '자동화율', icon: '🦾' },
+  { id: 'automationRate', label: '물류 자동화율', short: '자동화율', icon: '⚙️' },
 ]
 
 export default function App() {
   const {
-    state, setState, updateWorker, updateElevator, updateArea, updateInventory, updateAmr,
+    state, setState, updateWorker, updateArea, updateInventory, updateAmr,
     updateLogisticsPersonnel, updateWarehouseArea, updateAutomationRate,
     addPhoto, removePhoto, addPersonnel, removePersonnel, updatePersonnel,
     addCycle, removeCycle, updateCycleCard, addCardInCycle, removeCardInCycle,
@@ -59,7 +59,7 @@ export default function App() {
     try {
       const filename = `LWO_분석_${new Date().toISOString().slice(0, 10)}.json`
       const json = JSON.stringify(state, null, 2)
-      const result = await saveJson(filename, json)
+      await saveJson(filename, json)
       showToast(`💾 저장 완료 (Documents/LWO/${filename})`)
     } catch (err) {
       console.error(err)
@@ -83,7 +83,7 @@ export default function App() {
           area:      { ...initialState.area, ...(loaded.area || {}) },
           inventory: { ...initialState.inventory, ...(loaded.inventory || {}) },
           amr:       { ...initialState.amr, ...(loaded.amr || {}) },
-          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...(loaded.logisticsPersonnel || {}) },
+          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...migrateLogisticsPersonnel(loaded.logisticsPersonnel || {}) },
           warehouseArea: { ...initialState.warehouseArea, ...(loaded.warehouseArea || {}) },
           automationRate: { ...initialState.automationRate, ...(loaded.automationRate || {}) }
         })
@@ -109,7 +109,7 @@ export default function App() {
   const handleReset = () => {
     if (window.confirm('모든 입력 데이터를 초기화합니다. 진행하시겠습니까?')) {
       setState(initialState)
-      try { localStorage.removeItem('lwo_app_persistent_data') } catch {}
+      try { localStorage.removeItem('lwo_app_persistent_data') } catch { /* ignore local reset failures */ }
       showToast('🔄 초기화되었습니다.')
     }
   }

@@ -560,7 +560,7 @@
           <p>CMDT별 물동·용기 면적·DIO·여유율로 <b>창고 면적</b> 산출</p>
         </div>
         <div class="module-card">
-          <span class="ico">🦾</span>
+          <span class="ico">⚙️</span>
           <h5>물류 자동화율</h5>
           <p>자동화 적용 Item과 Re-Handling Item 기준 <b>자동화율</b> 산출</p>
         </div>
@@ -1061,7 +1061,7 @@ Cycle      = 3600 ÷ 10.8 ≈ <span class="res">333 초</span>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <div><div class="step-title">가중치 적용</div><div class="step-body">휴식·부대작업·현장 여건을 반영하는 가중치를 입력해 최종 적정 인원을 보정합니다.</div></div>
+          <div><div class="step-title">여유율 적용</div><div class="step-body">휴식·부대작업·현장 여건을 반영하는 여유율(%)을 입력해 최종 적정 인원을 보정합니다.</div></div>
         </div>
       </div>
 
@@ -1073,18 +1073,20 @@ Cycle      = 3600 ÷ 10.8 ≈ <span class="res">333 초</span>
 <span class="com"># 일 단위 환산</span>
 일 운반 횟수     = 시간당 운반 횟수 × 일 작업 시간
 총 운반 시간     = 물류 운반 시간 × 일 운반 횟수
-물류 운반 인원   = 총 운반 시간 ÷ (일 작업 시간 × 3600)
+일 물류 가동 시간 = 일 작업 시간 × 3600초
+물류 운반 인원   = 총 운반 시간 ÷ 일 물류 가동 시간
 
-<span class="res">최종 물류 적정 인원 = 물류 운반 인원 × 가중치</span></pre>
+<span class="res">최종 물류 적정 인원 = 물류 운반 인원 × 여유율</span></pre>
 
       <div class="example">
-        <h5>피킹 30초, 로딩/언로딩 90초, 왕복 120m, 속도 1.5m/s, 시간당 30회, 8h, 가중치 1.2</h5>
+        <h5>피킹 30초, 로딩/언로딩 90초, 왕복 120m, 속도 1.5m/s, 시간당 30회, 8h, 여유율 130%</h5>
         <pre class="formula" style="margin:0;">이동 시간 = 120 ÷ 1.5 = 80초
 물류 운반 시간 = 30 + 90 + 80 = 200초
 일 운반 횟수 = 30 × 8 = 240회
 총 운반 시간 = 200 × 240 = 48,000초
-물류 운반 인원 = 48,000 ÷ (8 × 3600) = 1.67명
-<span class="res">최종 적정 인원 = 1.67 × 1.2 = 2.0명</span></pre>
+일 물류 가동 시간 = 8 × 3600 = 28,800초
+물류 운반 인원 = 48,000 ÷ 28,800 = 1.67명
+<span class="res">최종 적정 인원 = 1.67 × 130% = 2.2명</span></pre>
       </div>
       <div class="note info"><span class="note-label">💡</span>휴대폰 하단 탭에서는 공간을 줄이기 위해 <b>물류인원</b>으로 표시됩니다.</div>
     </section>
@@ -1099,7 +1101,7 @@ Cycle      = 3600 ÷ 10.8 ≈ <span class="res">333 초</span>
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <div><div class="step-title">CMDT 항목 입력</div><div class="step-body">CMDT명, 일 Max 물동, 용기 가로·세로, 적재 수량, 적재 단수를 입력합니다.</div></div>
+          <div><div class="step-title">기초 정보부터 순차 입력</div><div class="step-body">기초 정보, 용기당 면적, 적재 수량, 생산 기준 면적 순서로 입력합니다. 계산 결과 카드는 산식과 함께 확인합니다.</div></div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
@@ -1134,18 +1136,18 @@ Total 적재 수량 = 48 × 2 = 96개
     <!-- ============= AUTOMATION RATE ============= -->
     <section class="chapter" id="automation-rate">
       <span class="chapter-num">CHAPTER 10</span>
-      <h2 class="chapter-title">🦾 물류 자동화율</h2>
-      <p class="chapter-lead">자동화 적용 Item 수와 Re-Handling Item 수를 기준으로 물류 자동화율과 No Re-Handling율을 함께 확인합니다.</p>
+      <h2 class="chapter-title">⚙️ 물류 자동화율</h2>
+      <p class="chapter-lead">자동화 적용 Item 수와 Re-Handling Item 수를 기준으로 물류 자동화율과 Re-Handling율을 함께 확인합니다.</p>
 
       <h3 id="automation-step"><span class="h-num">1</span>입력 절차</h3>
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <div><div class="step-title">자동화 Item 입력</div><div class="step-body">총 Item 수와 자동화 적용 Item 수를 입력하면 물류 자동화율이 자동 산출됩니다.</div></div>
+          <div><div class="step-title">자동화 Item 입력</div><div class="step-body">총 입고 Item 수와 자동화 적용 Item 수를 입력하면 물류 자동화율이 자동 산출됩니다.</div></div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <div><div class="step-title">Re-Handling 입력</div><div class="step-body">입고 Item 수와 Re-Handling Item 수를 입력하면 No Re-Handling율이 자동 산출됩니다.</div></div>
+          <div><div class="step-title">Re-Handling 입력</div><div class="step-body">총 입고 Item 수와 Re-Handling Item 수를 입력하면 Re-Handling율이 자동 산출됩니다.</div></div>
         </div>
         <div class="step">
           <div class="step-num">3</div>
@@ -1154,12 +1156,12 @@ Total 적재 수량 = 48 × 2 = 96개
       </div>
 
       <h3 id="automation-formula"><span class="h-num">2</span>산식 / 예시</h3>
-      <pre class="formula">물류 자동화율(%)      = 자동화 적용 Item 수 ÷ 총 Item 수 × 100
-No Re-Handling율(%) = (1 - Re-Handling Item 수 ÷ 입고 Item 수) × 100</pre>
+      <pre class="formula">물류 자동화율(%)  = 자동화 적용 Item 수 ÷ 총 입고 Item 수 × 100
+Re-Handling율(%) = Re-Handling Item 수 ÷ 총 입고 Item 수 × 100</pre>
       <div class="example">
         <h5>총 100 Item 중 자동화 45 Item / 입고 80 Item 중 Re-Handling 10 Item</h5>
         <pre class="formula" style="margin:0;">물류 자동화율 = 45 ÷ 100 × 100 = 45%
-No Re-Handling율 = (1 - 10 ÷ 80) × 100 = 87.5%</pre>
+Re-Handling율 = 10 ÷ 80 × 100 = 12.5%</pre>
       </div>
       <div class="note info"><span class="note-label">💡</span>휴대폰 하단 탭에서는 <b>자동화율</b>로 표시됩니다.</div>
     </section>
@@ -1188,7 +1190,7 @@ No Re-Handling율 = (1 - 10 ÷ 80) × 100 = 87.5%</pre>
           <tr><td><b>CMDT</b></td><td>Commodity — 창고 면적 산출 시 관리하는 품목/자재 단위</td></tr>
           <tr><td><b>DIO</b></td><td>Days Inventory Outstanding — 창고에 보유해야 하는 재고 일수</td></tr>
           <tr><td><b>Re-Handling</b></td><td>입고 후 추가 재취급·재정렬·재이동이 발생하는 작업</td></tr>
-          <tr><td><b>No Re-Handling율</b></td><td>입고 Item 중 재취급 없이 흐르는 비율</td></tr>
+          <tr><td><b>Re-Handling율</b></td><td>입고 Item 중 재취급이 발생하는 비율</td></tr>
           <tr><td><b>Spare</b></td><td>예비 대수 — 고장 대비 추가 보유</td></tr>
           <tr><td><b>⌈ x ⌉</b></td><td>올림 (ceiling). 소수는 무조건 다음 정수</td></tr>
         </tbody>

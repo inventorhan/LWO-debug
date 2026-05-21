@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { getGap } from '../shared/utils/common'
 import TimerSection from '../shared/components/TimerSection'
 import PhotoSection from '../shared/components/PhotoSection'
@@ -140,22 +140,22 @@ export default function WorkerWorkload({
   const [editTransportLabel, setEditTransportLabel] = useState('')
   const [editTransportSpeed, setEditTransportSpeed] = useState('')
 
-  const setBasicInfo = useCallback((upd) => {
+  const setBasicInfo = (upd) => {
     updateData({ basicInfo: { ...basicInfo, ...upd } })
-  }, [basicInfo, updateData])
+  }
 
-  const handleAddCycle = useCallback(() => {
+  const handleAddCycle = () => {
     addCycle()
     setUserSelectedCycleId(null)
-  }, [addCycle])
+  }
 
-  const handleDeleteCycle = useCallback((id) => {
+  const handleDeleteCycle = (id) => {
     if (measurements.length <= 1) return
     if (window.confirm(`${activeIndex}회차의 모든 측정 데이터가 삭제됩니다. 계속하시겠습니까?`)) {
       removeCycle(id)
       setUserSelectedCycleId(null)
     }
-  }, [measurements.length, activeIndex, removeCycle])
+  }
 
   /* 합계 계산 */
   const totalTransportSec = measurements.reduce((sum, cycle) =>
@@ -215,9 +215,33 @@ export default function WorkerWorkload({
     }
   }).filter(w => w.name)
 
-  const maxT = Math.max(1, ...workerStats.map(w => w.totalT))
-  const maxDist = Math.max(1, ...workerStats.map(w => w.dist))
-  const maxWl = Math.max(100, ...workerStats.map(w => w.wlRate))
+  const measuredWorkerStats = workerStats.filter(w => w.totalT > 0 || w.dist > 0 || w.wlRate > 0)
+  const averageSource = measuredWorkerStats.length ? measuredWorkerStats : workerStats
+  const avgOf = (selector) => avg(averageSource.map(selector))
+  const averageWorkerStat = {
+    name: '평균',
+    isAverage: true,
+    totalT: avgOf(w => w.totalT),
+    dist: avgOf(w => w.dist),
+    wlRate: Math.round(avgOf(w => w.wlRate) * 10) / 10,
+    details: {
+      pickT: avgOf(w => w.details.pickT),
+      moveT: avgOf(w => w.details.moveT),
+      loadT: avgOf(w => w.details.loadT),
+      recoverT: avgOf(w => w.details.recoverT),
+      moveDist: avgOf(w => w.details.moveDist),
+      recoverDist: avgOf(w => w.details.recoverDist),
+      pickRate: avgOf(w => w.details.pickRate),
+      moveRate: avgOf(w => w.details.moveRate),
+      loadRate: avgOf(w => w.details.loadRate),
+      recoverRate: avgOf(w => w.details.recoverRate)
+    }
+  }
+  const dashboardStats = workerStats.length ? [averageWorkerStat, ...workerStats] : []
+
+  const maxT = Math.max(1, ...dashboardStats.map(w => w.totalT))
+  const maxDist = Math.max(1, ...dashboardStats.map(w => w.dist))
+  const maxWl = Math.max(100, ...dashboardStats.map(w => w.wlRate))
 
   const teamTotal = workerStats.reduce((acc, w) => ({
     pickT: acc.pickT + w.details.pickT,
@@ -582,18 +606,18 @@ export default function WorkerWorkload({
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 작업 시간 {chartMode === 'avg' ? '평균' : '누적'} (초)</div>
             <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
-              {workerStats.map((w, i) => {
+              {dashboardStats.map((w, i) => {
                 const heightPct = maxT > 0 ? Math.max(2, (w.totalT / maxT) * 100) : 2
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: '#2A1F24' }}>{w.totalT.toFixed(0)}s</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1' }}>
+                  <div key={w.isAverage ? 'avg-time' : `${w.name}-${i}`} style={{ flex: w.isAverage ? '0 0 48px' : 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: w.isAverage ? 'var(--color-primary-dark)' : '#2A1F24' }}>{w.totalT.toFixed(0)}s</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1', outline: w.isAverage ? '2px solid var(--color-primary-soft)' : 'none' }}>
                       {renderSegment(w.details.pickT, w.totalT, COLORS.pick, '피킹')}
                       {renderSegment(w.details.moveT, w.totalT, COLORS.move, '이동')}
                       {renderSegment(w.details.loadT, w.totalT, COLORS.load, '로딩')}
                       {renderSegment(w.details.recoverT, w.totalT, COLORS.recovery, '회수')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: w.isAverage ? 'var(--color-primary-dark)' : '#7C6E74', fontWeight: 800, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}
@@ -603,16 +627,16 @@ export default function WorkerWorkload({
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 총 이동 거리 {chartMode === 'avg' ? '평균' : '누적'} (m)</div>
             <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
-              {workerStats.map((w, i) => {
+              {dashboardStats.map((w, i) => {
                 const heightPct = maxDist > 0 ? Math.max(2, (w.dist / maxDist) * 100) : 2
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: COLORS.move }}>{w.dist.toFixed(0)}m</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1' }}>
+                  <div key={w.isAverage ? 'avg-distance' : `${w.name}-${i}`} style={{ flex: w.isAverage ? '0 0 48px' : 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: w.isAverage ? 'var(--color-primary-dark)' : COLORS.move }}>{w.dist.toFixed(0)}m</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', background: '#F4EFF1', outline: w.isAverage ? '2px solid var(--color-primary-soft)' : 'none' }}>
                       {renderSegment(w.details.moveDist, w.dist, COLORS.move, '이동', 'm')}
                       {renderSegment(w.details.recoverDist, w.dist, COLORS.recovery, '회수', 'm')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: w.isAverage ? 'var(--color-primary-dark)' : '#7C6E74', fontWeight: 800, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}
@@ -622,19 +646,19 @@ export default function WorkerWorkload({
           <div className="section-card" style={{ background: 'white' }}>
             <div className="section-title">인원별 업무 부하율 (%)</div>
             <div style={{ display: 'flex', height: 220, gap: 8, alignItems: 'flex-end', margin: '32px 0 24px 0', borderBottom: '1px dashed #D4C8CD' }}>
-              {workerStats.map((w, i) => {
+              {dashboardStats.map((w, i) => {
                 const heightPct = maxWl > 0 ? Math.max(2, (w.wlRate / maxWl) * 100) : 2
                 const totalColor = w.wlRate > 90 ? COLORS.recovery : w.wlRate > 70 ? COLORS.load : COLORS.move
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: totalColor }}>{w.wlRate.toFixed(0)}%</div>
-                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', border: `1px solid ${totalColor}33`, background: '#F4EFF1' }}>
+                  <div key={w.isAverage ? 'avg-workload' : `${w.name}-${i}`} style={{ flex: w.isAverage ? '0 0 48px' : 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: `${heightPct}%`, position: 'relative', minWidth: 0 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, position: 'absolute', top: -22, color: w.isAverage ? 'var(--color-primary-dark)' : totalColor }}>{w.wlRate.toFixed(0)}%</div>
+                    <div style={{ width: '100%', maxWidth: 36, height: '100%', display: 'flex', flexDirection: 'column-reverse', borderRadius: '4px 4px 0 0', overflow: 'hidden', border: `1px solid ${totalColor}33`, background: '#F4EFF1', outline: w.isAverage ? '2px solid var(--color-primary-soft)' : 'none' }}>
                       {renderSegment(w.details.pickRate, w.wlRate, COLORS.pick, '피킹', '%')}
                       {renderSegment(w.details.moveRate, w.wlRate, COLORS.move, '이동', '%')}
                       {renderSegment(w.details.loadRate, w.wlRate, COLORS.load, '로딩', '%')}
                       {renderSegment(w.details.recoverRate, w.wlRate, COLORS.recovery, '회수', '%')}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: '#7C6E74', fontWeight: 700, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                    <div style={{ position: 'absolute', bottom: -22, fontSize: '0.7rem', color: w.isAverage ? 'var(--color-primary-dark)' : '#7C6E74', fontWeight: 800, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
                   </div>
                 )
               })}

@@ -13,6 +13,16 @@ const initialTransportTypes = {
   other:    { label: '기타', speed: 0 }
 }
 
+export function migrateLogisticsPersonnel(data = {}) {
+  const next = { ...data }
+  const hasAvailability = next.availability !== undefined && next.availability !== null && next.availability !== ''
+  const availability = parseFloat(next.availability)
+  if (hasAvailability && availability > 0 && availability <= 1) {
+    next.availability = String((parseFloat(next.weight) || 1.3) * 100)
+  }
+  return next
+}
+
 /* ───── 초기 데이터 템플릿 ───── */
 const createInitialWorkerData = (name) => {
   const t = Date.now()
@@ -103,7 +113,7 @@ export const initialState = {
   amr: { tactTime: '', recycleRate: '', loadQty: '', amrtSpeed: '', distance: '', loadCount: '', loadTime: '', unloadCount: '', unloadTime: '', operationRate: 0.8, spare: 1 },
   logisticsPersonnel: {
     pickTime: '', loadTime: '', distance: '', speed: 1.2,
-    tripsPerHour: '', hoursPerDay: 8, availability: 0.7, weight: 1.3
+    tripsPerHour: '', hoursPerDay: 8, availability: 130, weight: 1.3
   },
   warehouseArea: {
     items: []
@@ -194,6 +204,7 @@ export function useAppState() {
           })
           migratedElevator = { ...migratedElevator, _unit: 'm', dataByHogi: next }
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time localStorage hydration.
         setState({
           ...initialState,
           ...parsed,
@@ -228,11 +239,13 @@ export function useAppState() {
             return base
           })(),
           amr:            { ...initialState.amr, ...(parsed.amr || {}) },
-          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...(parsed.logisticsPersonnel || {}) },
+          logisticsPersonnel: { ...initialState.logisticsPersonnel, ...migrateLogisticsPersonnel(parsed.logisticsPersonnel || {}) },
           warehouseArea: { ...initialState.warehouseArea, ...(parsed.warehouseArea || {}) },
           automationRate: { ...initialState.automationRate, ...(parsed.automationRate || {}) }
         })
-      } catch {}
+      } catch {
+        // 잘못된 저장 데이터는 무시하고 기본 상태로 시작
+      }
     }
   }, [])
 
@@ -689,7 +702,7 @@ export function useAppState() {
   })), [])
 
   /* 일자별 레코드 — 현재 활성 (제품, 모델) 키에 작용 */
-  const _ensureKey = (s) => {
+  const _ensureKey = useCallback((s) => {
     const cur = s.inventoryStats
     const key = invKey(cur.activeProduct, cur.activeModel)
     if (!cur.dataByKey[key]) {
@@ -702,7 +715,7 @@ export function useAppState() {
       }
     }
     return s
-  }
+  }, [])
 
   const addInvStatsRecord = useCallback(() => setState(s => {
     const safe = _ensureKey(s)
@@ -734,7 +747,7 @@ export function useAppState() {
         dataByKey: { ...cur.dataByKey, [key]: { ...cur.dataByKey[key], records: [...records, record] } }
       }
     }
-  }), [])
+  }), [_ensureKey])
 
   const updateInvStatsRecord = useCallback((id, upd) => setState(s => {
     const cur = s.inventoryStats

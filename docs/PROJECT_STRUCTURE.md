@@ -111,7 +111,7 @@ D:\Programs\LWO\
 │  │  │  ├─ AmrCalculation.jsx       🤖 AMR 대수
 │  │  │  ├─ LogisticsPersonnel.jsx   👥 물류 적정 인원
 │  │  │  ├─ WarehouseArea.jsx        🏭 물류 창고 면적
-│  │  │  └─ AutomationRate.jsx       🦾 물류 자동화율
+│  │  │  └─ AutomationRate.jsx       ⚙️ 물류 자동화율
 │  │  │
 │  │  ├─ shared\                     재사용 컴포넌트 / 유틸
 │  │  │  ├─ components\
@@ -423,15 +423,15 @@ export default function ModuleName({ data, updateData, ...액션들 }) {
 
 | 모듈 | 파일 | 라인 | 특이사항 |
 |------|------|------|---------|
-| **WorkerWorkload** | `WorkerWorkload.jsx` | 780 | 인원별 데이터 분리 (`dataByPersonnel`), 운반 종류 관리 모달, 인원별 비교 대시보드, 상세 시간 그래프 |
+| **WorkerWorkload** | `WorkerWorkload.jsx` | 804 | 인원별 데이터 분리 (`dataByPersonnel`), 운반 종류 관리 모달, 인원별 비교 대시보드, 평균 기준 대시보드, 상세 시간 그래프 |
 | **ElevatorWorkload** | `ElevatorWorkload.jsx` | 465 | 호기별 데이터 (`dataByHogi`), gap-fill 호기 번호, 호기별 비교 대시보드 |
 | **AreaEfficiency** | `AreaEfficiency.jsx` | 432 | 구역 배열 + 적재 항목 중첩, 막대그래프 시각화 |
 | **InventoryStorage** | `InventoryStorage.jsx` | 362 | flat 입력 → 4단계 자동 산출, 부호 표시 (잉여/부족), **적정 Space 산출 카드** |
 | **InventoryStatistics** | `InventoryStatistics.jsx` | 472 | 제품/모델 dropdown + 관리 모달, 일별 입력 테이블, 추이 라인 차트(SVG), **99.9%/99.5% Z-기반 적정재고** |
 | **AmrCalculation** | `AmrCalculation.jsx` | 268 | 가장 단순. 3단계 산출 (UPH → Cycle → 대수) |
-| **LogisticsPersonnel** | `LogisticsPersonnel.jsx` | 144 | 피킹·이동·로딩/언로딩 시간과 운반 횟수 기반 적정 인원 산출 |
-| **WarehouseArea** | `WarehouseArea.jsx` | 201 | CMDT별 물동·용기 면적·DIO·여유율 기반 창고 면적(m²/평) 산출 |
-| **AutomationRate** | `AutomationRate.jsx` | 130 | 자동화 적용 Item 및 Re-Handling Item 기준 자동화율/No Re-Handling율 산출 |
+| **LogisticsPersonnel** | `LogisticsPersonnel.jsx` | 136 | 피킹·이동·로딩/언로딩 시간, 운반 횟수, 여유율(%) 기반 적정 인원 산출 |
+| **WarehouseArea** | `WarehouseArea.jsx` | 221 | CMDT별 물동·용기 면적·DIO·여유율 기반 창고 면적(m²/평) 산출, 순차 입력 그룹과 전체 폭 결과 카드 |
+| **AutomationRate** | `AutomationRate.jsx` | 130 | 자동화 적용 Item 및 Re-Handling Item 기준 자동화율/Re-Handling율 산출 |
 
 ### 측정형 vs 산출형
 - **측정형** (Worker, Elevator) — 스톱워치로 시간 기록, 회차 반복, `TimerSection` 사용

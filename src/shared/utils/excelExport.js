@@ -503,14 +503,15 @@ export async function exportToExcel(state) {
   const lpSpeed = n(lp.speed)
   const lpHours = n(lp.hoursPerDay) || 8
   const lpTripsPerHour = n(lp.tripsPerHour)
-  const lpAvailability = n(lp.availability) || 0.7
-  const lpWeight = n(lp.weight) || 1
+  const lpHasMarginRate = lp.availability !== undefined && lp.availability !== null && lp.availability !== ''
+  const lpRawMarginRate = n(lp.availability)
+  const lpMarginRate = lpHasMarginRate ? lpRawMarginRate : 0
   const lpMove = lpSpeed > 0 ? lpDistance / lpSpeed : 0
   const lpTransport = lpPick + lpLoad + lpMove
   const lpDailyTrips = lpTripsPerHour * lpHours
   const lpDailyTime = lpTransport * lpDailyTrips
-  const lpBase = lpDailyTime > 0 ? lpDailyTime / (lpHours * 3600) : 0
-  const lpAvailable = (lpHours * 3600 * lpAvailability) > 0 ? lpDailyTime / (lpHours * 3600 * lpAvailability) : 0
+  const lpDailyWorkSeconds = lpHours * 3600
+  const lpBase = lpDailyWorkSeconds > 0 ? lpDailyTime / lpDailyWorkSeconds : 0
   ws7.addRows([
     ['피킹 시간(sec)', lp.pickTime],
     ['로딩/언로딩 시간(sec)', lp.loadTime],
@@ -522,18 +523,18 @@ export async function exportToExcel(state) {
     ['일 작업 시간(h)', lpHours],
     ['일 운반 횟수', lpDailyTrips.toFixed(0)],
     ['총 물류 운반 시간(sec)', lpDailyTime.toFixed(0)],
+    ['일 물류 가동 시간(sec)', lpDailyWorkSeconds.toFixed(0)],
     ['물류 운반 인원(명)', lpBase.toFixed(1)],
-    ['여유율 기준 인원(명)', lpAvailable.toFixed(1)],
-    ['가중치', lpWeight],
-    ['최종 물류 적정 인원(명)', (lpBase * lpWeight).toFixed(1)]
+    ['여유율(%)', lpMarginRate.toFixed(0)],
+    ['최종 물류 적정 인원(명)', (lpBase * (lpMarginRate / 100)).toFixed(1)]
   ])
 
   /* ─── 8. 물류 창고 면적 ─── */
   const ws8 = workbook.addWorksheet('8.물류창고면적')
   ws8.columns = [
-    { header: '창고 유형', key: 'warehouseType', width: 14 },
+    { header: '제품군', key: 'category', width: 16 },
     { header: 'CMDT', key: 'cmdt', width: 16 },
-    { header: '구분', key: 'category', width: 16 },
+    { header: '창고 유형', key: 'warehouseType', width: 14 },
     { header: '일 생산 수량', key: 'dailyQty', width: 14 },
     { header: '용기', key: 'container', width: 12 },
     { header: 'L', key: 'length', width: 10 },
@@ -565,7 +566,7 @@ export async function exportToExcel(state) {
     whM2 += warehouseM2
     whPyeong += warehousePyeong
     ws8.addRow([
-      item.warehouseType, item.cmdt, item.category, n(item.dailyQty), item.container,
+      item.category, item.cmdt, item.warehouseType, n(item.dailyQty), item.container,
       n(item.length), n(item.width), n(item.height), occupiedArea.toFixed(2),
       n(item.loadQty), n(item.stackLevel) || 1, totalLoadQty.toFixed(0),
       dailyPallets.toFixed(0), dailyArea.toFixed(1), n(item.dio), n(item.margin) || 1,
@@ -589,16 +590,16 @@ export async function exportToExcel(state) {
   const arRate = arTotal > 0 ? (arAutomated / arTotal) * 100 : 0
   const rhTotal = n(auto.rehandlingTotalItems) || arTotal
   const rhItems = n(auto.rehandlingItems)
-  const noRhRate = rhTotal > 0 ? (1 - (rhItems / rhTotal)) * 100 : 0
+  const rhRate = rhTotal > 0 ? (rhItems / rhTotal) * 100 : 0
   ws9.addRows([
     ['회사명', auto.companyName],
     ['측정자', auto.inspector],
-    ['총 Item 수', auto.totalItems],
+    ['총 입고 Item 수', auto.totalItems],
     ['자동화 적용 Item 수', auto.automatedItems],
     ['물류 자동화율(%)', arRate.toFixed(1)],
-    ['입고 Item 수', auto.rehandlingTotalItems || auto.totalItems],
+    ['총 입고 Item 수(Re-Handling)', auto.rehandlingTotalItems || auto.totalItems],
     ['Re-Handling Item 수', auto.rehandlingItems],
-    ['No Re-Handling율(%)', noRhRate.toFixed(1)]
+    ['Re-Handling율(%)', rhRate.toFixed(1)]
   ])
 
   const buffer = await workbook.xlsx.writeBuffer()

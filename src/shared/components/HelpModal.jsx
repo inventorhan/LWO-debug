@@ -10,7 +10,7 @@ const TABS = [
   { id: 'amr',       icon: '🤖', title: 'AMR 대수' },
   { id: 'personnelPlan', icon: '👥', title: '물류 적정 인원' },
   { id: 'warehouseArea', icon: '🏭', title: '물류 창고 면적' },
-  { id: 'automationRate', icon: '🦾', title: '물류 자동화율' }
+  { id: 'automationRate', icon: '⚙️', title: '물류 자동화율' }
 ]
 
 const C = {
@@ -126,7 +126,7 @@ const IntroContent = () => (
           ['🤖 AMR 대수', '생산 Tact + AMR 왕복 시간', '필요 대수 (대)'],
           ['👥 물류 적정 인원', '피킹·이동·로딩 시간과 운반 횟수', '필요 인원 (명)'],
           ['🏭 물류 창고 면적', 'CMDT별 물동·용기·DIO·여유율', '창고 면적 (m²/평)'],
-          ['🦾 물류 자동화율', '자동화 적용 Item + Re-Handling Item', '자동화율 %, No Re-Handling율 %']
+          ['⚙️ 물류 자동화율', '자동화 적용 Item + Re-Handling Item', '자동화율 %, Re-Handling율 %']
         ]}
       />
     </Section>
@@ -509,7 +509,7 @@ const PersonnelPlanContent = () => (
     <Section title="입력 절차">
       <Step n="1" title="작업 조건 입력">피킹 시간, 로딩/언로딩 시간, 왕복 이동 거리, 이동 속도를 입력합니다.</Step>
       <Step n="2" title="운반 횟수 입력">시간당 운반 횟수와 일 작업 시간을 입력하면 일 운반 횟수가 자동 계산됩니다.</Step>
-      <Step n="3" title="가중치 적용">휴식·부대 작업·현장 여건을 반영하는 가중치를 입력해 최종 인원을 보정합니다.</Step>
+      <Step n="3" title="여유율 적용">휴식·부대 작업·현장 여건을 반영하는 여유율(%)을 입력해 최종 인원을 보정합니다.</Step>
     </Section>
 
     <Section title="자동 산출 공식">
@@ -517,8 +517,9 @@ const PersonnelPlanContent = () => (
 물류 운반 시간   = 피킹 시간 + 로딩/언로딩 시간 + 이동 시간
 일 운반 횟수     = 시간당 운반 횟수 × 일 작업 시간
 총 운반 시간     = 물류 운반 시간 × 일 운반 횟수
-물류 운반 인원   = 총 운반 시간 ÷ (일 작업 시간 × 3600)
-최종 적정 인원   = 물류 운반 인원 × 가중치`}</Formula>
+일 물류 가동 시간 = 일 작업 시간 × 3600초
+물류 운반 인원   = 총 운반 시간 ÷ 일 물류 가동 시간
+최종 적정 인원   = 물류 운반 인원 × 여유율`}</Formula>
       <Tip>휴대폰 하단 탭에서는 공간을 줄이기 위해 <b>물류인원</b>으로 표시됩니다.</Tip>
     </Section>
   </>
@@ -531,7 +532,7 @@ const WarehouseAreaContent = () => (
     </Section>
 
     <Section title="입력 절차">
-      <Step n="1" title="CMDT 항목 입력">CMDT명, 일 Max 물동, 용기 가로·세로, 적재 수량, 적재 단수를 입력합니다.</Step>
+      <Step n="1" title="기초 정보부터 순차 입력">기초 정보, 용기당 면적, 적재 수량, 생산 기준 면적 순서로 입력합니다.</Step>
       <Step n="2" title="재고 일수와 여유율 입력">DIO와 창고 여유율을 입력합니다. 예: 2.0 = 통로/안전공간 포함 200% 기준.</Step>
       <Step n="3" title="합계 확인">항목별 면적과 전체 창고 면적(m²/평)을 확인합니다.</Step>
     </Section>
@@ -551,18 +552,18 @@ Total 적재 수량 = 적재 수량 × 적재 단수
 const AutomationRateContent = () => (
   <>
     <Section title="이 모듈은 언제 쓰나요?">
-      <p>자동화 적용 Item 수와 Re-Handling Item 수를 기준으로 <b>물류 자동화율</b>과 <b>No Re-Handling율</b>을 함께 확인합니다.</p>
+      <p>자동화 적용 Item 수와 Re-Handling Item 수를 기준으로 <b>물류 자동화율</b>과 <b>Re-Handling율</b>을 함께 확인합니다.</p>
     </Section>
 
     <Section title="입력 절차">
       <Step n="1" title="자동화 Item 입력">전체 Item 수와 자동화 적용 Item 수를 입력합니다.</Step>
-      <Step n="2" title="Re-Handling 입력">입고 Item 수와 Re-Handling Item 수를 입력합니다.</Step>
+      <Step n="2" title="Re-Handling 입력">총 입고 Item 수와 Re-Handling Item 수를 입력합니다.</Step>
       <Step n="3" title="현장 사진 첨부">필요하면 자동화 구간 또는 Re-Handling 구간 사진을 첨부해 근거를 남깁니다.</Step>
     </Section>
 
     <Section title="자동 산출 공식">
-      <Formula>{`물류 자동화율(%)      = 자동화 적용 Item 수 ÷ 총 Item 수 × 100
-No Re-Handling율(%) = (1 - Re-Handling Item 수 ÷ 입고 Item 수) × 100`}</Formula>
+      <Formula>{`물류 자동화율(%)  = 자동화 적용 Item 수 ÷ 총 입고 Item 수 × 100
+Re-Handling율(%) = Re-Handling Item 수 ÷ 총 입고 Item 수 × 100`}</Formula>
       <Tip>휴대폰 하단 탭에서는 <b>자동화율</b>로 표시됩니다.</Tip>
     </Section>
   </>

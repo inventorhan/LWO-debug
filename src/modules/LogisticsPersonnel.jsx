@@ -11,17 +11,17 @@ export default function LogisticsPersonnel({ data, updateData }) {
   const speed = n(f.speed)
   const tripsPerHour = n(f.tripsPerHour)
   const hoursPerDay = n(f.hoursPerDay) || 8
-  const availability = n(f.availability) || 0.7
-  const weight = n(f.weight) || 1
+  const hasMarginRate = f.availability !== undefined && f.availability !== null && f.availability !== ''
+  const rawMarginRate = n(f.availability)
+  const marginRate = hasMarginRate ? rawMarginRate : 0
 
   const moveTime = speed > 0 ? distance / speed : 0
   const transportTime = pickTime + loadTime + moveTime
   const dailyTrips = tripsPerHour * hoursPerDay
   const dailyTransportTime = transportTime * dailyTrips
-  const basePersonnel = dailyTransportTime > 0 ? dailyTransportTime / (hoursPerDay * 3600) : 0
-  const availableWorkTime = hoursPerDay * 3600 * availability
-  const availablePersonnel = availableWorkTime > 0 ? dailyTransportTime / availableWorkTime : 0
-  const finalPersonnel = basePersonnel * weight
+  const dailyWorkSeconds = hoursPerDay * 3600
+  const basePersonnel = dailyWorkSeconds > 0 ? dailyTransportTime / dailyWorkSeconds : 0
+  const finalPersonnel = basePersonnel * (marginRate / 100)
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
@@ -58,7 +58,7 @@ export default function LogisticsPersonnel({ data, updateData }) {
             <input className="input-field" type="number" min={0} step="0.1" value={f.speed ?? 1.2}
               onChange={e => set('speed', e.target.value)} placeholder="예: 1.2" />
           </div>
-          <div className="result-box tone-blue">
+          <div className="result-box tone-blue full-width">
             <span className="result-box__label">이동 시간 = 거리 ÷ 속도</span>
             <span className="result-box__value">{fmtN(moveTime, '초', 1)}</span>
           </div>
@@ -101,40 +101,32 @@ export default function LogisticsPersonnel({ data, updateData }) {
           <HelpHint title="물류 적정 인원">
             <p>하루 총 운반 시간을 기준 작업 시간으로 나눠 필요 인원을 계산합니다.</p>
             <HintFormula>{`총 물류 운반 시간 = 물류 운반 시간 × 일 운반 횟수
-물류 운반 인원 = 총 물류 운반 시간 ÷ (일 작업 시간 × 3600)
-최종 물류 적정 인원 = 물류 운반 인원 × 가중치`}</HintFormula>
-            <HintNote>여유율 기준 인원도 함께 표시해 가동률 기준 검토에 사용할 수 있습니다.</HintNote>
+일 물류 가동 시간 = 일 작업 시간 × 3600초
+물류 운반 인원 = 총 물류 운반 시간 ÷ 일 물류 가동 시간
+최종 물류 적정 인원 = 물류 운반 인원 × 여유율`}</HintFormula>
+            <HintNote>여유율은 130%처럼 백분율로 입력합니다.</HintNote>
           </HelpHint>
         </div>
         <div className="input-grid">
           <div className="input-group">
-            <div className="input-label-row"><span className="input-label">여유율</span></div>
-            <input className="input-field" type="number" min={0} max={1} step="0.1" value={f.availability ?? 0.7}
-              onChange={e => set('availability', e.target.value)} placeholder="예: 0.7" />
+            <div className="input-label-row"><span className="input-label">여유율 (%)</span></div>
+            <input className="input-field" type="number" min={0} step="1" value={hasMarginRate ? f.availability : ''}
+              onChange={e => set('availability', e.target.value)} placeholder="예: 130" />
           </div>
-          <div className="input-group">
-            <div className="input-label-row"><span className="input-label">가중치</span></div>
-            <input className="input-field" type="number" min={0} step="0.1" value={f.weight ?? 1.3}
-              onChange={e => set('weight', e.target.value)} placeholder="예: 1.3" />
-          </div>
-          <div className="result-box tone-slate">
-            <span className="result-box__label">총 물류 운반 시간</span>
+          <div className="result-box tone-slate full-width">
+            <span className="result-box__label">총 물류 운반 시간 = 물류 운반 시간 × 일 운반 횟수</span>
             <span className="result-box__value">{fmtN(dailyTransportTime, '초', 0)}</span>
           </div>
-          <div className="result-box tone-blue">
-            <span className="result-box__label">인당 가동 가능 시간 ({hoursPerDay}h × {availability})</span>
-            <span className="result-box__value">{fmtN(availableWorkTime, '초', 0)}</span>
+          <div className="result-box tone-blue full-width">
+            <span className="result-box__label">일 물류 가동 시간 = 일 작업 시간 × 3600초</span>
+            <span className="result-box__value">{fmtN(dailyWorkSeconds, '초', 0)}</span>
           </div>
-          <div className="result-box tone-dark">
-            <span className="result-box__label">물류 운반 인원</span>
+          <div className="result-box tone-dark full-width">
+            <span className="result-box__label">물류 운반 인원 = 총 물류 운반 시간 ÷ 일 물류 가동 시간</span>
             <span className="result-box__value">{fmtN(basePersonnel, '명', 1)}</span>
           </div>
-          <div className="result-box tone-dark">
-            <span className="result-box__label">여유율 기준 인원</span>
-            <span className="result-box__value">{fmtN(availablePersonnel, '명', 1)}</span>
-          </div>
           <div className="result-box full-width" style={{ background: '#A50034', padding: '18px 16px' }}>
-            <span className="result-box__label">최종 물류 적정 인원 = 물류 운반 인원 × 가중치</span>
+            <span className="result-box__label">최종 물류 적정 인원 = 물류 운반 인원 × 여유율</span>
             <span className="result-box__value" style={{ fontSize: '1.7rem' }}>{fmtN(finalPersonnel, '명', 1)}</span>
           </div>
         </div>
